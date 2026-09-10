@@ -382,7 +382,10 @@
 <script>
 "use strict";
 if("serviceWorker"in navigator){window.addEventListener("load",function(){
-  navigator.serviceWorker.register("sw.js").catch(function(_){});});}
+  navigator.serviceWorker.register("sw.js").catch(function(_){});});
+  var swReloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",function(){
+    if(swReloaded)return;swReloaded=true;window.location.reload();});}
 window.onerror=function(m,src,l){var b=document.getElementById("boot");
   b.style.display="block";b.textContent="Erreur : "+m+" (ligne "+l+")";return false;};
 
