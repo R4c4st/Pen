@@ -1,5 +1,5 @@
 "use strict";
-var CACHE = "fiche-terrain-v1";
+var CACHE = "fiche-terrain-v2";
 var ASSETS = [
   ".",
   "index.html",
@@ -23,6 +23,7 @@ self.addEventListener("activate", function(e){
 
 self.addEventListener("fetch", function(e){
   if(e.request.method!=="GET") return;
+  if(new URL(e.request.url).origin !== self.location.origin) return; // laisser passer le géocodage
   e.respondWith(
     fetch(e.request).then(function(res){
       var copy = res.clone();

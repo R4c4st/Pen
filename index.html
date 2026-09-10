@@ -143,6 +143,52 @@
   .warnbar{background:rgba(15,30,51,.6);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
     border:1px solid rgba(96,165,250,.3);color:#a8c8f0;
     border-radius:14px;padding:11px 13px;font-size:12.5px;line-height:1.5}
+  /* Réglages */
+  .cog{margin-left:12px;width:40px;height:40px;flex:none;border-radius:12px;cursor:pointer;
+    background:rgba(255,255,255,.06);border:1px solid var(--stroke);color:var(--ink);font-size:19px;
+    display:flex;align-items:center;justify-content:center;transition:transform .15s,background .2s}
+  .cog:active{transform:scale(.9)}
+  header .ref{margin-left:auto}
+  .sheet-backdrop{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center;
+    background:rgba(3,6,14,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+  .sheet{width:100%;max-width:520px;max-height:88vh;overflow-y:auto;
+    background:rgba(18,26,46,.92);backdrop-filter:blur(26px);-webkit-backdrop-filter:blur(26px);
+    border:1px solid var(--stroke-hi);border-bottom:none;border-radius:24px 24px 0 0;
+    padding:18px 18px calc(22px + env(safe-area-inset-bottom));
+    box-shadow:0 -12px 48px rgba(0,0,0,.5);
+    animation:sheetUp .26s cubic-bezier(.2,.8,.2,1)}
+  @keyframes sheetUp{from{transform:translateY(24px);opacity:.6}to{transform:translateY(0);opacity:1}}
+  @media(prefers-reduced-motion:reduce){.sheet{animation:none}}
+  .sheet-head{display:flex;align-items:center;margin-bottom:6px}
+  .sheet-head h2{margin:0;font-size:18px;font-weight:600}
+  .sheet-close{margin-left:auto;width:36px;height:36px;border-radius:10px;cursor:pointer;
+    background:rgba(255,255,255,.06);border:1px solid var(--stroke);color:var(--ink);font-size:15px}
+  .setting{padding:14px 2px;border-bottom:1px solid var(--stroke)}
+  .setting:last-of-type{border-bottom:none}
+  .setting>label{display:block;font-size:14px;font-weight:600;margin-bottom:10px}
+  .setting .hint{display:block;font-size:12px;color:var(--muted);margin-top:2px;font-weight:400}
+  .setting-inline{display:flex;align-items:center;gap:12px}
+  .setting-inline input[type=range]{flex:1;width:auto}
+  .setting-inline .val{min-width:26px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  .segmented{display:flex;gap:6px;background:rgba(10,16,32,.5);border:1px solid var(--stroke);
+    border-radius:13px;padding:5px}
+  .segmented button{flex:1;min-height:42px;border:none;border-radius:9px;cursor:pointer;
+    background:transparent;color:var(--muted);font-size:14px;font-weight:600;font-family:inherit;
+    transition:background .18s,color .18s}
+  .segmented button.on{background:linear-gradient(180deg,var(--accent-hi),var(--accent-lo));color:#06101f;
+    box-shadow:0 3px 12px rgba(59,130,246,.4)}
+  .setting.toggle{display:flex;align-items:center;gap:14px}
+  .setting.toggle>div{flex:1}
+  .setting.toggle>div>label{margin:0;font-size:14px;font-weight:600}
+  .switch{flex:none;width:52px;height:31px;border-radius:16px;cursor:pointer;position:relative;
+    background:rgba(255,255,255,.12);border:1px solid var(--stroke);transition:background .2s}
+  .switch i{position:absolute;top:2px;left:2px;width:25px;height:25px;border-radius:50%;background:#fff;
+    transition:transform .2s;box-shadow:0 2px 5px rgba(0,0,0,.4)}
+  .switch[aria-checked="true"]{background:linear-gradient(180deg,var(--accent-hi),var(--accent-lo));border-color:transparent}
+  .switch[aria-checked="true"] i{transform:translateX(21px)}
+  .geo-status{font-size:12px;color:var(--muted);min-height:16px;padding:2px}
+  .geo-status.ok{color:var(--accent-hi)}
+  .geo-status.err{color:var(--danger)}
 </style>
 </head>
 <body>
@@ -154,6 +200,7 @@
   <span class="logo">✎</span>
   <h1>Fiche Terrain</h1>
   <span class="ref" id="refLabel"></span>
+  <button class="cog" id="btnSettings" aria-label="Réglages">⚙</button>
 </header>
 
 <main id="screenLaunch">
@@ -224,6 +271,53 @@
   <button class="btn accent" id="btnNew">＋ Nouvelle</button>
 </footer>
 
+<div class="sheet-backdrop hidden" id="settingsBackdrop">
+  <div class="sheet" id="settingsSheet" role="dialog" aria-label="Réglages">
+    <div class="sheet-head">
+      <h2>Réglages</h2>
+      <button class="sheet-close" id="btnCloseSettings" aria-label="Fermer">✕</button>
+    </div>
+
+    <div class="setting">
+      <label>Taille du texte des notes</label>
+      <div class="segmented" id="segTextSize">
+        <button data-size="s">Petit</button>
+        <button data-size="m">Moyen</button>
+        <button data-size="l">Grand</button>
+        <button data-size="xl">Très grand</button>
+      </div>
+    </div>
+
+    <div class="setting">
+      <label>Épaisseur du trait par défaut</label>
+      <div class="setting-inline">
+        <input type="range" id="setStroke" min="1" max="24" value="4">
+        <span class="val" id="setStrokeVal">4</span>
+      </div>
+    </div>
+
+    <div class="setting">
+      <label>Photos par page (export PDF)</label>
+      <div class="segmented" id="segPerPage">
+        <button data-n="1">1</button>
+        <button data-n="2">2</button>
+        <button data-n="4">4</button>
+      </div>
+    </div>
+
+    <div class="setting toggle">
+      <div><label>Date et heure sur la fiche</label><span class="hint">Ajoutée en tête de la fiche exportée</span></div>
+      <button class="switch" id="tglDate" role="switch" aria-checked="false"><i></i></button>
+    </div>
+
+    <div class="setting toggle">
+      <div><label>Emplacement (GPS)</label><span class="hint">Coordonnées + lien Maps, et adresse si réseau</span></div>
+      <button class="switch" id="tglGeo" role="switch" aria-checked="false"><i></i></button>
+    </div>
+    <div class="geo-status" id="geoStatus"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -244,6 +338,64 @@ try{
   function toast(msg){var t=$("toast");t.textContent=msg;t.classList.add("show");
     clearTimeout(toastT);toastT=setTimeout(function(){t.classList.remove("show");},2600);}
 
+  /* ---- Réglages persistants (localStorage) ---- */
+  var TEXT_PX={s:14,m:18,l:24,xl:32};
+  var CFG={textSize:"m",stroke:4,perPage:1,showDate:false,showGeo:false};
+  try{var saved=JSON.parse(localStorage.getItem("ficheTerrainCfg")||"{}");
+    for(var kk in saved)if(kk in CFG)CFG[kk]=saved[kk];}catch(_){}
+  function saveCfg(){try{localStorage.setItem("ficheTerrainCfg",JSON.stringify(CFG));}catch(_){}}
+  var geo=null; // {lat,lng,addr}
+  applyCfgUIsafe();
+  function applyCfgUIsafe(){try{applyCfgUI();}catch(_){}}
+
+  function markSeg(box,attr,val){var bs=box.querySelectorAll("button");
+    for(var i=0;i<bs.length;i++)bs[i].classList.toggle("on",bs[i].getAttribute(attr)===String(val));}
+  function applyCfgUI(){
+    markSeg($("segTextSize"),"data-size",CFG.textSize);
+    markSeg($("segPerPage"),"data-n",CFG.perPage);
+    $("setStroke").value=CFG.stroke;$("setStrokeVal").textContent=CFG.stroke;
+    $("tglDate").setAttribute("aria-checked",CFG.showDate?"true":"false");
+    $("tglGeo").setAttribute("aria-checked",CFG.showGeo?"true":"false");
+    S.size=CFG.stroke;if($("size"))$("size").value=CFG.stroke;
+  }
+
+  $("btnSettings").addEventListener("click",function(){$("settingsBackdrop").classList.remove("hidden");});
+  $("btnCloseSettings").addEventListener("click",function(){$("settingsBackdrop").classList.add("hidden");});
+  $("settingsBackdrop").addEventListener("click",function(e){
+    if(e.target===this)this.classList.add("hidden");});
+
+  $("segTextSize").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
+    CFG.textSize=b.getAttribute("data-size");markSeg(this,"data-size",CFG.textSize);saveCfg();});
+  $("segPerPage").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;
+    CFG.perPage=+b.getAttribute("data-n");markSeg(this,"data-n",CFG.perPage);saveCfg();});
+  $("setStroke").addEventListener("input",function(e){CFG.stroke=+e.target.value;
+    $("setStrokeVal").textContent=CFG.stroke;S.size=CFG.stroke;if($("size"))$("size").value=CFG.stroke;saveCfg();});
+  $("tglDate").addEventListener("click",function(){CFG.showDate=!CFG.showDate;
+    this.setAttribute("aria-checked",CFG.showDate?"true":"false");saveCfg();});
+  $("tglGeo").addEventListener("click",function(){CFG.showGeo=!CFG.showGeo;
+    this.setAttribute("aria-checked",CFG.showGeo?"true":"false");saveCfg();
+    if(CFG.showGeo)captureGeo();else{geo=null;$("geoStatus").className="geo-status";$("geoStatus").textContent="";}});
+
+  function captureGeo(){
+    var st=$("geoStatus");
+    if(!navigator.geolocation){st.className="geo-status err";st.textContent="Géoloc non supportée par ce navigateur.";return;}
+    st.className="geo-status";st.textContent="Localisation en cours…";
+    navigator.geolocation.getCurrentPosition(function(p){
+      geo={lat:p.coords.latitude,lng:p.coords.longitude,addr:""};
+      st.className="geo-status ok";
+      st.textContent="Position : "+geo.lat.toFixed(5)+", "+geo.lng.toFixed(5)+" — recherche adresse…";
+      // Géocodage inverse (nécessite réseau) — best effort
+      fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+geo.lat+"&lon="+geo.lng+"&zoom=18&accept-language=fr")
+        .then(function(r){return r.json();})
+        .then(function(d){if(d&&d.display_name){geo.addr=d.display_name;
+          st.textContent="Position : "+geo.addr;}else{
+          st.textContent="Position : "+geo.lat.toFixed(5)+", "+geo.lng.toFixed(5)+" (adresse indisponible)";}})
+        .catch(function(){st.textContent="Position : "+geo.lat.toFixed(5)+", "+geo.lng.toFixed(5)+" (adresse : pas de réseau)";});
+    },function(err){st.className="geo-status err";
+      st.textContent=err.code===1?"Localisation refusée — autorise-la dans les réglages du site.":"Position indisponible.";
+    },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+  }
+
   var modeEls=document.querySelectorAll(".mode");
   for(var i=0;i<modeEls.length;i++){
     modeEls[i].addEventListener("click",function(){
@@ -261,6 +413,8 @@ try{
         $("ctxWarn").textContent="⚠ Ouvert en local : la dictée vocale est bloquée par le navigateur. Pour l'activer, ouvre l'app depuis une adresse https (ton site GitHub). Photo, dessin, texte et export marchent quand même.";
         $("btnMic").disabled=true;
       }
+      applyCfgUI();
+      if(CFG.showGeo)captureGeo();
     });
   }
 
@@ -368,7 +522,8 @@ try{
   for(var s=0;s<sw.length;s++){sw[s].addEventListener("click",function(){
     S.color=this.getAttribute("data-color");setTool("pen");
     for(var j=0;j<sw.length;j++)sw[j].classList.remove("on");this.classList.add("on");});}
-  $("size").addEventListener("input",function(e){S.size=+e.target.value;});
+  $("size").addEventListener("input",function(e){S.size=+e.target.value;
+    CFG.stroke=S.size;$("setStroke").value=S.size;$("setStrokeVal").textContent=S.size;saveCfg();});
   $("btnUndo").addEventListener("click",function(){var p=S.photos[S.active];
     if(p&&p.strokes.length){p.strokes.pop();redraw();}});
   $("btnClearDraw").addEventListener("click",function(){var p=S.photos[S.active];
@@ -401,30 +556,66 @@ try{
   });
   $("btnClearNotes").addEventListener("click",function(){$("notes").value="";baseText="";});
 
+  function fmtDateTime(){var d=new Date();function p(n){return String(n).padStart(2,"0");}
+    return p(d.getDate())+"/"+p(d.getMonth()+1)+"/"+d.getFullYear()+" "+p(d.getHours())+":"+p(d.getMinutes());}
+
   function composeFiche(photo){
     var notes=$("notes").value.trim();
-    var pad=24,lineH=26,fontSize=18;
+    var fontSize=TEXT_PX[CFG.textSize]||18;
+    var pad=24,lineH=Math.round(fontSize*1.45);
     var off=document.createElement("canvas");var octx=off.getContext("2d");
-    var W=photo.w;octx.font=fontSize+"px sans-serif";
-    var words=notes.split(/\s+/),lines=[],cur="";
-    if(notes){for(var i=0;i<words.length;i++){var test=cur?cur+" "+words[i]:words[i];
-      if(octx.measureText(test).width>W-2*pad){lines.push(cur);cur=words[i];}else cur=test;}
+    var W=photo.w;
+
+    // Lignes de notes (retour à la ligne selon la largeur)
+    octx.font=fontSize+"px sans-serif";
+    var lines=[];
+    if(notes){var words=notes.split(/\s+/),cur="";
+      for(var i=0;i<words.length;i++){var test=cur?cur+" "+words[i]:words[i];
+        if(octx.measureText(test).width>W-2*pad){lines.push(cur);cur=words[i];}else cur=test;}
       if(cur)lines.push(cur);}
-    var headH=S.ref?40:0;var notesH=notes?pad+lineH*lines.length+pad:0;
-    off.width=W;off.height=photo.h+headH+notesH;
+
+    // Bloc emplacement (sous les notes)
+    var geoLines=[];
+    if(CFG.showGeo&&geo){
+      geoLines.push("📍 "+geo.lat.toFixed(5)+", "+geo.lng.toFixed(5));
+      if(geo.addr)geoLines.push(geo.addr);
+    }
+
+    // En-tête : réf (gauche) + date/heure (droite) si activée
+    var dateStr=CFG.showDate?fmtDateTime():"";
+    var headH=(S.ref||dateStr)?44:0;
+
+    var notesBlockH=lines.length?pad+lineH*lines.length:0;
+    var geoBlockH=geoLines.length?(notesBlockH?12:pad)+lineH*geoLines.length:0;
+    var bottomH=(notesBlockH||geoBlockH)?(notesBlockH+geoBlockH+pad):0;
+
+    off.width=W;off.height=photo.h+headH+bottomH;
     octx.fillStyle="#ffffff";octx.fillRect(0,0,off.width,off.height);
-    if(S.ref){octx.fillStyle="#0d0d0f";octx.fillRect(0,0,W,headH);
-      octx.fillStyle="#3b82f6";octx.font="600 20px sans-serif";octx.fillText(S.ref,pad,26);}
+
+    if(headH){octx.fillStyle="#0d0d0f";octx.fillRect(0,0,W,headH);
+      if(S.ref){octx.fillStyle="#3b82f6";octx.font="600 20px sans-serif";
+        octx.textAlign="left";octx.fillText(S.ref,pad,28);}
+      if(dateStr){octx.fillStyle="#cfe0f5";octx.font="15px sans-serif";
+        octx.textAlign="right";octx.fillText(dateStr,W-pad,28);octx.textAlign="left";}}
+
+    // Photo + annotations
     var tmp=document.createElement("canvas");tmp.width=photo.w;tmp.height=photo.h;
     var tctx=tmp.getContext("2d");tctx.drawImage(photo.img,0,0,photo.w,photo.h);
-    for(var k=0;k<photo.strokes.length;k++){var st=photo.strokes[k];if(st.pts.length<1)continue;
-      tctx.lineJoin=tctx.lineCap="round";tctx.globalCompositeOperation=st.erase?"destination-out":"source-over";
-      if(!st.erase)tctx.strokeStyle=st.color;tctx.beginPath();tctx.moveTo(st.pts[0].x,st.pts[0].y);
-      for(var j=1;j<st.pts.length;j++){tctx.lineWidth=st.pts[j].w;tctx.lineTo(st.pts[j].x,st.pts[j].y);}
+    for(var k=0;k<photo.strokes.length;k++){var stk=photo.strokes[k];if(stk.pts.length<1)continue;
+      tctx.lineJoin=tctx.lineCap="round";tctx.globalCompositeOperation=stk.erase?"destination-out":"source-over";
+      if(!stk.erase)tctx.strokeStyle=stk.color;tctx.beginPath();tctx.moveTo(stk.pts[0].x,stk.pts[0].y);
+      for(var j=1;j<stk.pts.length;j++){tctx.lineWidth=stk.pts[j].w;tctx.lineTo(stk.pts[j].x,stk.pts[j].y);}
       tctx.stroke();}
     tctx.globalCompositeOperation="source-over";octx.drawImage(tmp,0,headH);
-    if(notes){octx.fillStyle="#0d1b2a";octx.font=fontSize+"px sans-serif";
-      var y=photo.h+headH+pad+fontSize;for(var m=0;m<lines.length;m++){octx.fillText(lines[m],pad,y);y+=lineH;}}
+
+    // Notes
+    var y=photo.h+headH+pad+fontSize;
+    if(lines.length){octx.fillStyle="#0d1b2a";octx.font=fontSize+"px sans-serif";
+      for(var m=0;m<lines.length;m++){octx.fillText(lines[m],pad,y);y+=lineH;}}
+    // Emplacement
+    if(geoLines.length){if(lines.length)y+=12;octx.fillStyle="#2b5079";
+      octx.font="600 "+Math.round(fontSize*0.9)+"px sans-serif";
+      for(var g=0;g<geoLines.length;g++){octx.fillText(geoLines[g],pad,y);y+=lineH;}}
     return off;
   }
   function stamp(){var d=new Date();function p(n){return String(n).padStart(2,"0");}
@@ -445,9 +636,18 @@ try{
     var imgs=S.photos.map(function(p){return composeFiche(p).toDataURL("image/jpeg",0.92);});
     var w=window.open("");
     if(!w){toast("Autorise les fenêtres pop-up pour le PDF");return;}
-    var html="<title>"+baseName()+"</title><style>@page{margin:10mm}body{margin:0}"+
-      "img{max-width:100%;display:block;margin:0 auto 10mm}</style>";
-    for(var i=0;i<imgs.length;i++)html+='<img src="'+imgs[i]+'">';
+    var per=CFG.perPage||1;
+    // hauteur d'image dispo par photo (A4 utile ≈ 277mm de haut)
+    var imgMaxH=per===1?"92vh":(Math.floor(277/per)-6)+"mm";
+    var html="<title>"+baseName()+"</title><style>@page{margin:10mm}"+
+      "body{margin:0;font-family:sans-serif}"+
+      ".pg{page-break-after:always;display:flex;flex-direction:column;justify-content:flex-start;gap:6mm}"+
+      ".pg:last-child{page-break-after:auto}"+
+      "img{max-width:100%;max-height:"+imgMaxH+";display:block;margin:0 auto;object-fit:contain}"+
+      "</style>";
+    for(var i=0;i<imgs.length;i+=per){html+='<div class="pg">';
+      for(var j=i;j<i+per&&j<imgs.length;j++)html+='<img src="'+imgs[j]+'">';
+      html+='</div>';}
     w.document.write(html);w.document.close();
     setTimeout(function(){w.focus();w.print();},500);
     toast("Menu impression → Enregistrer en PDF");
