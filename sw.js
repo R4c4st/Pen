@@ -1,5 +1,5 @@
 "use strict";
-var CACHE = "fiche-terrain-v2";
+var CACHE = "fiche-terrain-v5";
 var ASSETS = [
   ".",
   "index.html",

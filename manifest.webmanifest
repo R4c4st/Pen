@@ -1,7 +1,7 @@
 {
-  "name": "Fiche Terrain",
-  "short_name": "Fiche Terrain",
-  "description": "Annotation de photos de chantier avec notes et export PNG/PDF",
+  "name": "SnapNote",
+  "short_name": "SnapNote",
+  "description": "Photo annotée + notes de terrain, export PNG/PDF",,
   "lang": "fr",
   "start_url": ".",
   "scope": ".",

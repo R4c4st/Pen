@@ -9,8 +9,8 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Fiche Terrain">
-<title>Fiche Terrain</title>
+<meta name="apple-mobile-web-app-title" content="SnapNote">
+<title>SnapNote</title>
 <style>
   :root{
     --accent:#3b82f6; --accent-lo:#2563eb; --accent-hi:#60a5fa;
@@ -60,6 +60,12 @@
     transition:transform .12s,border-color .2s,box-shadow .2s}
   .mode:active{transform:scale(.97);border-color:var(--stroke-hi)}
   .mode .ic{font-size:36px}
+  .ic-svg{width:38px;height:38px;color:var(--accent-hi);
+    filter:drop-shadow(0 0 10px rgba(96,165,250,.35))}
+  .stage .placeholder .ic-svg{width:46px;height:46px}
+  .ic-btn{width:20px;height:20px;flex:none}
+  .ic-h3{width:16px;height:16px;color:var(--muted);vertical-align:-3px;margin-right:2px}
+  .card h3{display:flex;align-items:center;gap:6px}
   .mode b{display:block;margin-top:10px;font-size:16px}
   .mode span{display:block;margin-top:5px;font-size:12.5px;color:var(--muted)}
   .field-launch{display:flex;flex-direction:column;gap:7px;text-align:left;max-width:380px;margin:0 auto;width:100%}
@@ -128,10 +134,10 @@
   .mic-status{font-size:12.5px;color:var(--muted);min-height:16px}
   .mic-status.live{color:var(--accent-hi)}
   .mic-status.err{color:var(--danger)}
-  footer{flex:none;display:flex;gap:10px;padding:11px 16px;
+  footer{flex:none;display:flex;gap:8px;padding:7px 12px;
     background:var(--glass);backdrop-filter:blur(var(--blur));-webkit-backdrop-filter:blur(var(--blur));
     border-top:1px solid var(--stroke)}
-  footer .btn{flex:1;font-size:14px;padding:0 8px}
+  footer .btn{flex:1;min-height:40px;font-size:13px;padding:0 6px;border-radius:11px}
   .toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%) translateY(20px);
     background:rgba(10,16,32,.7);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
     border:1px solid var(--stroke);color:#fff;padding:12px 20px;border-radius:24px;font-size:13.5px;
@@ -192,13 +198,66 @@
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="ic-cam" viewBox="0 0 24 24">
+    <rect x="2.5" y="6.5" width="19" height="13" rx="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M8.5 6.5 l1.2-2.2 a1 1 0 0 1 .9-.5 h2.8 a1 1 0 0 1 .9.5 l1.2 2.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+    <circle cx="12" cy="13" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <circle cx="12" cy="13" r="1.3" fill="currentColor"/>
+  </symbol>
+  <symbol id="ic-stack" viewBox="0 0 24 24">
+    <rect x="8" y="2.6" width="13.4" height="10.4" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".55"/>
+    <rect x="5.3" y="5.3" width="13.4" height="10.4" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".8"/>
+    <rect x="2.6" y="8" width="13.4" height="10.4" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <circle cx="6.4" cy="11.6" r="1.35" fill="currentColor"/>
+    <path d="M3.2 17.4 l3.4-3.4 a1 1 0 0 1 1.4 0 l2 2 l2.3-2.5 a1 1 0 0 1 1.45 0 l1.6 1.7"
+      fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="ic-note" viewBox="0 0 24 24">
+    <path d="M4 4.5 A1.5 1.5 0 0 1 5.5 3 H14 l6 6 v10.5 A1.5 1.5 0 0 1 18.5 21 h-13 A1.5 1.5 0 0 1 4 19.5 Z"
+      fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M14 3 v5 a1 1 0 0 0 1 1 h5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="M7.5 12.5 h7 M7.5 15.5 h7 M7.5 18 h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="ic-mic" viewBox="0 0 24 24">
+    <rect x="9" y="2.5" width="6" height="11" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+    <path d="M5.5 11 a6.5 6.5 0 0 0 13 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M12 17.5 v3.5 M8.5 21 h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+  </symbol>
+</svg>
 <div class="bg-grad"></div>
 <div class="bg-blobs"><i></i><i></i><i></i></div>
 <div id="boot"></div>
 
 <header>
-  <span class="logo">✎</span>
-  <h1>Fiche Terrain</h1>
+  <span class="logo" aria-hidden="true">
+    <svg viewBox="0 0 32 32" width="27" height="27">
+      <defs>
+        <linearGradient id="lensG" x1="80%" y1="12%" x2="20%" y2="90%">
+          <stop offset="0%" stop-color="#b05cc8"/>
+          <stop offset="45%" stop-color="#7a3aa8"/>
+          <stop offset="72%" stop-color="#2b3fa0"/>
+          <stop offset="100%" stop-color="#2f7fd0"/>
+        </linearGradient>
+        <radialGradient id="lensGlow" cx="60%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#e6dcff" stop-opacity=".55"/>
+          <stop offset="60%" stop-color="#e6dcff" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="16" cy="16" r="15" fill="#26262b"/>
+      <circle cx="16" cy="16" r="12.4" fill="none" stroke="#eef0f6" stroke-width=".7"/>
+      <circle cx="16" cy="16" r="11.6" fill="none" stroke="#0c0c0e" stroke-width="1.4"/>
+      <circle cx="16" cy="16" r="10.6" fill="url(#lensG)"/>
+      <circle cx="16" cy="16" r="10.6" fill="url(#lensGlow)"/>
+      <g fill="none" stroke="#dcd2ff" stroke-opacity=".28" stroke-width=".5">
+        <circle cx="17.4" cy="14.6" r="8"/>
+        <circle cx="17.4" cy="14.6" r="5.2"/>
+        <circle cx="17.4" cy="14.6" r="2.8"/>
+      </g>
+      <circle cx="16" cy="16" r="1.7" fill="#0a0a16"/>
+    </svg>
+  </span>
+  <h1>SnapNote</h1>
   <span class="ref" id="refLabel"></span>
   <button class="cog" id="btnSettings" aria-label="Réglages">⚙</button>
 </header>
@@ -215,10 +274,10 @@
     </div>
     <div class="modes">
       <div class="mode" data-mode="single">
-        <div class="ic">📷</div><b>1 photo</b><span>Une seule prise à annoter</span>
+        <div class="ic"><svg class="ic-svg"><use href="#ic-cam"/></svg></div><b>1 photo</b><span>Une seule prise à annoter</span>
       </div>
       <div class="mode" data-mode="multi">
-        <div class="ic">🗂️</div><b>Multi-photos</b><span>Plusieurs prises par intervention</span>
+        <div class="ic"><svg class="ic-svg"><use href="#ic-stack"/></svg></div><b>Multi-photos</b><span>Plusieurs prises par intervention</span>
       </div>
     </div>
   </div>
@@ -246,18 +305,18 @@
     </div>
     <div class="stage empty" id="stage">
       <div class="placeholder" id="placeholder">
-        <div class="ic">📷</div><p>Prends une photo pour commencer</p>
+        <div class="ic"><svg class="ic-svg"><use href="#ic-cam"/></svg></div><p>Prends une photo pour commencer</p>
       </div>
       <canvas id="canvas" class="hidden"></canvas>
     </div>
     <div class="row">
-      <button class="btn accent" id="btnPhoto">📷 <span id="photoLabel">Prendre la photo</span></button>
+      <button class="btn accent" id="btnPhoto"><svg class="ic-btn"><use href="#ic-cam"/></svg> <span id="photoLabel">Prendre la photo</span></button>
     </div>
     <div class="card">
-      <h3>📝 Notes</h3>
+      <h3><svg class="ic-h3"><use href="#ic-note"/></svg> Notes</h3>
       <textarea id="notes" placeholder="Tape ici, ou dicte avec le micro…"></textarea>
       <div class="row">
-        <button class="btn mic" id="btnMic">🎤 Dicter</button>
+        <button class="btn mic" id="btnMic"><svg class="ic-btn"><use href="#ic-mic"/></svg> Dicter</button>
         <button class="btn" id="btnClearNotes">Effacer</button>
       </div>
       <div class="mic-status" id="micStatus"></div>
@@ -311,7 +370,7 @@
     </div>
 
     <div class="setting toggle">
-      <div><label>Emplacement (GPS)</label><span class="hint">Coordonnées + lien Maps, et adresse si réseau</span></div>
+      <div><label>Adresse en bas de page</label><span class="hint">N° rue, code postal et ville (nécessite le réseau)</span></div>
       <button class="switch" id="tglGeo" role="switch" aria-checked="false"><i></i></button>
     </div>
     <div class="geo-status" id="geoStatus"></div>
@@ -379,18 +438,19 @@ try{
   function captureGeo(){
     var st=$("geoStatus");
     if(!navigator.geolocation){st.className="geo-status err";st.textContent="Géoloc non supportée par ce navigateur.";return;}
-    st.className="geo-status";st.textContent="Localisation en cours…";
+    st.className="geo-status";st.textContent="Recherche de l'adresse…";
     navigator.geolocation.getCurrentPosition(function(p){
-      geo={lat:p.coords.latitude,lng:p.coords.longitude,addr:""};
-      st.className="geo-status ok";
-      st.textContent="Position : "+geo.lat.toFixed(5)+", "+geo.lng.toFixed(5)+" — recherche adresse…";
-      // Géocodage inverse (nécessite réseau) — best effort
-      fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+geo.lat+"&lon="+geo.lng+"&zoom=18&accept-language=fr")
+      var lat=p.coords.latitude,lng=p.coords.longitude;geo={addr:""};
+      fetch("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat="+lat+"&lon="+lng+"&zoom=18&addressdetails=1&accept-language=fr")
         .then(function(r){return r.json();})
-        .then(function(d){if(d&&d.display_name){geo.addr=d.display_name;
-          st.textContent="Position : "+geo.addr;}else{
-          st.textContent="Position : "+geo.lat.toFixed(5)+", "+geo.lng.toFixed(5)+" (adresse indisponible)";}})
-        .catch(function(){st.textContent="Position : "+geo.lat.toFixed(5)+", "+geo.lng.toFixed(5)+" (adresse : pas de réseau)";});
+        .then(function(d){var a=(d&&d.address)||{};
+          var rue=[a.house_number,a.road||a.pedestrian||a.footway].filter(Boolean).join(" ");
+          var ville=[a.postcode,a.city||a.town||a.village||a.municipality].filter(Boolean).join(" ");
+          geo.addr=[rue,ville].filter(Boolean).join(", ");
+          if(geo.addr){st.className="geo-status ok";st.textContent="Adresse : "+geo.addr;}
+          else{st.className="geo-status err";st.textContent="Adresse introuvable à cette position.";}})
+        .catch(function(){st.className="geo-status err";
+          st.textContent="Pas de réseau : adresse indisponible pour l'instant.";});
     },function(err){st.className="geo-status err";
       st.textContent=err.code===1?"Localisation refusée — autorise-la dans les réglages du site.":"Position indisponible.";
     },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
@@ -550,7 +610,7 @@ try{
     rec.onerror=function(e){micStatus.className="mic-status err";
       micStatus.textContent=e.error==="network"?"Pas de réseau : dictée indisponible.":
         e.error==="not-allowed"?"Micro refusé : autorise-le dans les réglages du site.":"Erreur dictée : "+e.error;};
-    rec.onend=function(){listening=false;$("btnMic").classList.remove("rec");$("btnMic").innerHTML="🎤 Dicter";
+    rec.onend=function(){listening=false;$("btnMic").classList.remove("rec");$("btnMic").innerHTML='<svg class="ic-btn"><use href="#ic-mic"/></svg> Dicter';
       if(!micStatus.classList.contains("err")){micStatus.className="mic-status";micStatus.textContent="";}};
     try{rec.start();}catch(_){}
   });
@@ -574,12 +634,9 @@ try{
         if(octx.measureText(test).width>W-2*pad){lines.push(cur);cur=words[i];}else cur=test;}
       if(cur)lines.push(cur);}
 
-    // Bloc emplacement (sous les notes)
+    // Bloc adresse (sous les notes)
     var geoLines=[];
-    if(CFG.showGeo&&geo){
-      geoLines.push("📍 "+geo.lat.toFixed(5)+", "+geo.lng.toFixed(5));
-      if(geo.addr)geoLines.push(geo.addr);
-    }
+    if(CFG.showGeo&&geo&&geo.addr){geoLines.push(geo.addr);}
 
     // En-tête : réf (gauche) + date/heure (droite) si activée
     var dateStr=CFG.showDate?fmtDateTime():"";
