@@ -1,18 +1,27 @@
 {
-  "name": "SnapNote",
-  "short_name": "SnapNote",
-  "description": "Fiche terrain : photos annotées, matériel, notes vocales, PDF",
-  "id": "./",
-  "start_url": "./",
+  "id": "/",
+  "name": "OCI CONNECT - Bon d'intervention",
+  "short_name": "OCI CONNECT",
+  "description": "Application mobile de création de bons d'intervention",
+  "lang": "fr-FR",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "orientation": "any",
-  "background_color": "#040a1d",
-  "theme_color": "#071233",
-  "lang": "fr",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#2980b9",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ]
 }

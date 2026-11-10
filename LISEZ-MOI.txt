@@ -1,0 +1,8 @@
+OCI CONNECT – version installable Android (PWA)
+
+1. Hébergez tout le contenu de ce dossier sur un site HTTPS (par exemple Netlify ou GitHub Pages). Ne renommez pas et ne séparez pas les fichiers.
+2. Ouvrez l’adresse HTTPS publiée dans Chrome sur le téléphone Android.
+3. Menu ⋮ > Installer l’application (ou Ajouter à l’écran d’accueil).
+4. Validez. L’icône OCI CONNECT apparaîtra comme une application.
+
+Important : une page ouverte directement depuis un fichier local (file://) ne peut pas être installée comme PWA. Le premier chargement nécessite une connexion Internet pour charger les bibliothèques de signature et d’export PDF. Une fois chargées, elles peuvent être mises en cache par le navigateur.
