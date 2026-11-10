@@ -78,6 +78,14 @@
         
         .pdf-sig-box { border: 1px solid #000; height: 120px; display: flex; justify-content: center; align-items: center; }
         .pdf-sig-box img { max-height: 110px; max-width: 100%; display: none; }
+        .photo-upload-group small { display:block; color:#6b7280; margin-top:7px; line-height:1.4; }
+        .photo-preview { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:10px; }
+        .photo-preview img { width:100%; height:90px; object-fit:cover; border-radius:8px; border:1px solid #d1d5db; }
+        .pdf-photo-page { break-before: page; page-break-before: always; min-height: 260mm; padding-top: 2mm; }
+        .pdf-photo-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:18px; }
+        .pdf-photo-item { border:1px solid #d1d5db; padding:6px; break-inside:avoid; page-break-inside:avoid; }
+        .pdf-photo-item img { display:block; width:100%; height:68mm; object-fit:contain; }
+        .pdf-photo-caption { font-size:11px; color:#555; margin-top:5px; }
 
         /* Eviter les coupures disgracieuses dans le PDF */
         .pdf-header, .pdf-section, .pdf-field, .pdf-box,
@@ -87,15 +95,6 @@
         }
         #pdf-template * { box-sizing: border-box; }
     </style>
-
-    <meta name="theme-color" content="#2980b9">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <link rel="manifest" href="manifest.webmanifest">
-    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-    <link rel="apple-touch-icon" href="icons/icon-192.png">
-
 </head>
 <body>
 
@@ -163,6 +162,12 @@
         <div class="signature-container">
             <canvas id="sig-tech"></canvas>
             <button class="btn-clear" onclick="padTech.clear()">Effacer</button>
+        </div>
+        <div class="form-group photo-upload-group">
+            <label for="m_photos">Photos de l'intervention (facultatif)</label>
+            <input type="file" id="m_photos" accept="image/*" capture="environment" multiple>
+            <small>Ajoutez une ou plusieurs photos. Elles seront imprimées sur une deuxième page du PDF.</small>
+            <div id="photo-preview" class="photo-preview"></div>
         </div>
     </div>
 </div>
@@ -233,6 +238,15 @@
             <div class="pdf-sig-box"><img id="p_sig_tech" src="" alt="Signature Technicien"></div>
         </div>
     </div>
+
+    <section class="pdf-photo-page" id="p_photo_page" style="display:none;">
+        <div class="pdf-header">
+            <img class="pdf-brand-logo" id="p_photo_logo" alt="OCI CONNECT">
+            <div class="pdf-title">PHOTOS DE L'INTERVENTION</div>
+        </div>
+        <div class="pdf-label" id="p_photo_client"></div>
+        <div class="pdf-photo-grid" id="p_photo_grid"></div>
+    </section>
 </div>
 
 <script>
@@ -272,6 +286,21 @@
     }
     const padClient = new SignaturePad(canvasClient, { penColor: "rgb(0, 0, 128)", minWidth: 1.5, maxWidth: 3 });
     const padTech = new SignaturePad(canvasTech, { penColor: "rgb(0, 0, 128)", minWidth: 1.5, maxWidth: 3 });
+
+    // PHOTOS DE L'INTERVENTION
+    const photoInput = document.getElementById('m_photos');
+    let selectedPhotos = [];
+    photoInput.addEventListener('change', async function () {
+        selectedPhotos = Array.from(this.files || []).filter(file => file.type.startsWith('image/'));
+        const preview = document.getElementById('photo-preview');
+        preview.replaceChildren();
+        selectedPhotos.forEach(file => {
+            const img = document.createElement('img');
+            img.alt = file.name;
+            img.src = URL.createObjectURL(file);
+            preview.appendChild(img);
+        });
+    });
 
     // MATERIEL
     function addMaterielRow() {
@@ -338,7 +367,38 @@
                 }
             });
 
-            // 4. Afficher le gabarit à sa vraie largeur A4 imprimable
+            // 4. Préparer la deuxième page de photos avec le même logo OCI CONNECT
+            const photoPage = document.getElementById('p_photo_page');
+            const photoGrid = document.getElementById('p_photo_grid');
+            photoGrid.replaceChildren();
+            if (selectedPhotos.length) {
+                photoPage.style.display = 'block';
+                document.getElementById('p_photo_logo').src = document.querySelector('.brand-logo').src;
+                const photoClient = document.getElementById('m_client').value || 'Client';
+                document.getElementById('p_photo_client').textContent = 'Client : ' + photoClient;
+                for (let i = 0; i < selectedPhotos.length; i++) {
+                    const dataUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(selectedPhotos[i]);
+                    });
+                    const item = document.createElement('div');
+                    item.className = 'pdf-photo-item';
+                    const img = document.createElement('img');
+                    img.src = dataUrl;
+                    img.alt = 'Photo ' + (i + 1);
+                    const caption = document.createElement('div');
+                    caption.className = 'pdf-photo-caption';
+                    caption.textContent = 'Photo ' + (i + 1) + (selectedPhotos[i].name ? ' – ' + selectedPhotos[i].name : '');
+                    item.append(img, caption);
+                    photoGrid.appendChild(item);
+                }
+            } else {
+                photoPage.style.display = 'none';
+            }
+
+            // 5. Afficher le gabarit à sa vraie largeur A4 imprimable
             window.scrollTo(0, 0);
             appContainer.style.display = 'none';
             navBar.style.display = 'none';
@@ -365,7 +425,7 @@
                 pagebreak: {
                     mode: ['css', 'legacy'],
                     avoid: ['.pdf-header', '.pdf-section', '.pdf-field', '.pdf-box',
-                            'table tr', '.pdf-sig-box']
+                            'table tr', '.pdf-sig-box', '.pdf-photo-item']
                 }
             };
 
@@ -381,14 +441,6 @@
             submitButton.textContent = 'Générer PDF';
         }
     }
-</script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.warn('Service worker:', err));
-  });
-}
 </script>
 </body>
 </html>
