@@ -69,7 +69,7 @@
             width: 190mm;
             max-width: 190mm;
             background: white;
-            padding: 8mm;
+            padding: 0;
             box-sizing: border-box;
             font-family: Arial, sans-serif;
             color: black;
@@ -78,36 +78,41 @@
             z-index: 9999;
         }
         
-        .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2980b9; padding-bottom: 10px; margin-bottom: 20px;}
-        .pdf-brand-logo { display: block; width: 145px; max-width: 42%; height: auto; object-fit: contain; }
-        .pdf-title { font-size: 24px; font-weight: bold; }
-        
-        .pdf-section { margin-bottom: 20px; }
-        .pdf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10px;}
-        .pdf-field { margin-bottom: 10px; }
-        .pdf-label { font-weight: bold; font-size: 12px; color: #555; display: block; margin-bottom: 2px;}
-        .pdf-value { border-bottom: 1px solid #000; padding: 4px 0; min-height: 18px; font-size: 14px; word-wrap: break-word;}
-        
-        .pdf-box { border: 1px solid #ccc; padding: 10px; min-height: 60px; font-size: 14px; white-space: pre-wrap; word-wrap: break-word;}
-        
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #000; padding: 8px; text-align: left; font-size: 13px;}
-        th { background-color: #f2f2f2; }
-        
-        .pdf-sig-box { border: 1px solid #000; height: 120px; display: flex; justify-content: center; align-items: center; }
-        .pdf-sig-box img { max-height: 110px; max-width: 100%; display: none; }
+        .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2980b9; padding-bottom: 6px; margin-bottom: 10px;}
+        .pdf-brand-logo { display: block; width: 120px; max-width: 42%; height: auto; object-fit: contain; }
+        .pdf-title { font-size: 22px; font-weight: bold; }
+
+        .pdf-section { margin-bottom: 10px; }
+        /* Blocs d'infos compacts sur 4 colonnes */
+        .pdf-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 16px; }
+        .pdf-grid-4 .span-2 { grid-column: span 2; }
+        .pdf-grid-4 .span-3 { grid-column: span 3; }
+        .pdf-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .pdf-label { font-weight: bold; font-size: 10.5px; color: #555; display: block; margin-bottom: 1px;}
+        .pdf-value { border-bottom: 1px solid #000; padding: 2px 0; min-height: 17px; font-size: 13px; line-height: 1.25; word-wrap: break-word;}
+
+        /* Travaux : la place libérée leur revient */
+        .pdf-box { border: 1px solid #999; padding: 6px 8px; font-size: 13px; line-height: 1.35; white-space: pre-wrap; word-wrap: break-word;}
+        #p_prevus { min-height: 40mm; }
+        #p_realises { min-height: 65mm; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 3px; }
+        th, td { border: 1px solid #000; padding: 3px 6px; text-align: left; font-size: 12px; height: 22px; }
+        th { background-color: #f2f2f2; font-size: 11px; }
+
+        .pdf-sig-box { border: 1px solid #000; height: 28mm; display: flex; justify-content: center; align-items: center; }
+        .pdf-sig-box img { max-height: 26mm; max-width: 100%; display: none; }
         .photo-upload-group small { display:block; color:#6b7280; margin-top:7px; line-height:1.4; }
         .photo-preview { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:10px; }
         .photo-preview img { width:100%; height:90px; object-fit:cover; border-radius:8px; border:1px solid #d1d5db; }
-        .pdf-photo-page { break-before: page; page-break-before: always; min-height: 260mm; padding-top: 2mm; }
+        .pdf-photo-page { padding-top: 2mm; }
         .pdf-photo-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:18px; }
         .pdf-photo-item { border:1px solid #d1d5db; padding:6px; break-inside:avoid; page-break-inside:avoid; }
         .pdf-photo-item img { display:block; width:100%; height:68mm; object-fit:contain; }
         .pdf-photo-caption { font-size:11px; color:#555; margin-top:5px; }
 
         /* Eviter les coupures disgracieuses dans le PDF */
-        .pdf-header, .pdf-section, .pdf-field, .pdf-box,
-        table, thead, tbody, tr, .pdf-sig-box {
+        .pdf-header, .pdf-field, tr, .pdf-sig-box, .pdf-sign-block {
             break-inside: avoid;
             page-break-inside: avoid;
         }
@@ -211,11 +216,10 @@
         <div class="pdf-title">BON D'INTERVENTION</div>
     </div>
 
-    <div class="pdf-section pdf-grid-2">
+    <div class="pdf-section pdf-grid-4">
         <div class="pdf-field"><span class="pdf-label">Date d'intervention</span><div class="pdf-value" id="p_date"></div></div>
-        <div class="pdf-field"><span class="pdf-label">Client</span><div class="pdf-value" id="p_client"></div></div>
-        <div class="pdf-field"><span class="pdf-label">Adresse</span><div class="pdf-value" id="p_adresse"></div></div>
-        <div class="pdf-field"></div>
+        <div class="pdf-field span-3"><span class="pdf-label">Client</span><div class="pdf-value" id="p_client"></div></div>
+        <div class="pdf-field span-2"><span class="pdf-label">Adresse</span><div class="pdf-value" id="p_adresse"></div></div>
         <div class="pdf-field"><span class="pdf-label">Code Postal</span><div class="pdf-value" id="p_cp"></div></div>
         <div class="pdf-field"><span class="pdf-label">Ville</span><div class="pdf-value" id="p_ville"></div></div>
     </div>
@@ -245,15 +249,15 @@
         </table>
     </div>
 
-    <div class="pdf-section pdf-grid-2">
-        <div class="pdf-field"><span class="pdf-label">Nom du technicien</span><div class="pdf-value" id="p_tech"></div></div>
-        <div class="pdf-field"><span class="pdf-label">Nom du client</span><div class="pdf-value" id="p_nomclient"></div></div>
+    <div class="pdf-section pdf-grid-4">
+        <div class="pdf-field span-2"><span class="pdf-label">Nom du technicien</span><div class="pdf-value" id="p_tech"></div></div>
+        <div class="pdf-field span-2"><span class="pdf-label">Nom du client</span><div class="pdf-value" id="p_nomclient"></div></div>
         <div class="pdf-field"><span class="pdf-label">Heure d'arrivée</span><div class="pdf-value" id="p_arrivee"></div></div>
         <div class="pdf-field"><span class="pdf-label">Heure de départ</span><div class="pdf-value" id="p_depart"></div></div>
-        <div class="pdf-field"><span class="pdf-label">Nombre de Kms</span><div class="pdf-value" id="p_kms"></div></div>
+        <div class="pdf-field span-2"><span class="pdf-label">Nombre de Kms</span><div class="pdf-value" id="p_kms"></div></div>
     </div>
 
-    <div class="pdf-section pdf-grid-2">
+    <div class="pdf-grid-2 pdf-sign-block">
         <div>
             <span class="pdf-label">Signature / Cachet du client :</span>
             <div class="pdf-sig-box"><img id="p_sig_client" src="" alt="Signature Client"></div>
@@ -445,7 +449,8 @@
                     tbody.appendChild(tr);
                 }
             });
-            if (!tbody.children.length) {
+            // Toujours au moins 4 lignes : place réservée au matériel, même vide
+            while (tbody.children.length < 4) {
                 const tr = document.createElement('tr');
                 for (let i = 0; i < 3; i++) tr.appendChild(document.createElement('td'));
                 tbody.appendChild(tr);
@@ -521,9 +526,10 @@
                 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                 pagebreak: {
-                    mode: ['css', 'legacy'],
-                    avoid: ['.pdf-header', '.pdf-section', '.pdf-field', '.pdf-box',
-                            'table tr', '.pdf-sig-box', '.pdf-photo-item']
+                    mode: ['css'],
+                    // saut de page vers les photos uniquement s'il y en a
+                    before: selectedPhotos.length ? ['#p_photo_page'] : [],
+                    avoid: ['.pdf-header', '.pdf-field', 'table tr', '.pdf-sign-block', '.pdf-photo-item']
                 }
             };
 
