@@ -4,7 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bon d'Intervention - App Mobile</title>
-    
+
+    <!-- PWA : application installable -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#2980b9">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="OCI CONNECT">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
@@ -42,6 +52,14 @@
         .btn-prev { background: #f3f4f6; color: #4b5563; display: none; }
         .btn-next { background: #2980b9; color: white; }
         .btn-submit { background: #27ae60; color: white; flex: 1; padding: 16px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; display: none;}
+        .btn-share { background: #2980b9; color: white; flex: 1; padding: 16px; font-size: 16px; font-weight: bold; border: none; border-radius: 12px; display: none;}
+        .btn-submit:disabled, .btn-share:disabled { opacity: .6; }
+        .bottom-nav { padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        #install-banner { display: none; position: fixed; left: 15px; right: 15px; bottom: calc(95px + env(safe-area-inset-bottom)); z-index: 1001; background: #1f2937; color: #fff; border-radius: 12px; padding: 12px 14px; align-items: center; gap: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.2); font-size: 14px; }
+        #install-banner span { flex: 1; }
+        #install-banner button { border: none; border-radius: 8px; padding: 10px 14px; font-weight: bold; font-size: 14px; }
+        #install-yes { background: #2980b9; color: #fff; }
+        #install-no { background: transparent; color: #d1d5db; }
 
         /* =========================================
            2. GABARIT PDF (Fixé en haut à gauche)
@@ -176,6 +194,13 @@
     <button class="btn-nav btn-prev" id="btn-prev" onclick="changeStep(-1)">Précédent</button>
     <button class="btn-nav btn-next" id="btn-next" onclick="changeStep(1)">Suivant</button>
     <button class="btn-submit" id="btn-submit" onclick="generatePDF()">Générer PDF</button>
+    <button class="btn-share" id="btn-share" onclick="sharePDF()">Partager</button>
+</div>
+
+<div id="install-banner">
+    <span>Installer l'appli sur l'écran d'accueil ?</span>
+    <button id="install-no">Plus tard</button>
+    <button id="install-yes">Installer</button>
 </div>
 
 
@@ -266,10 +291,12 @@
         if (currentStep === totalSteps) {
             document.getElementById('btn-next').style.display = 'none';
             document.getElementById('btn-submit').style.display = 'block';
+            document.getElementById('btn-share').style.display = 'block';
             resizeCanvas(canvasClient); resizeCanvas(canvasTech);
         } else {
             document.getElementById('btn-next').style.display = 'block';
             document.getElementById('btn-submit').style.display = 'none';
+            document.getElementById('btn-share').style.display = 'none';
         }
         window.scrollTo(0, 0);
     }
@@ -311,15 +338,84 @@
         list.appendChild(row);
     }
 
-    // GÉNÉRATION PDF
+    // DATE DU JOUR PRÉ-REMPLIE
+    (function prefillDate() {
+        const input = document.getElementById('m_date');
+        if (!input.value) {
+            const d = new Date();
+            const pad = n => String(n).padStart(2, '0');
+            input.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        }
+    })();
+
+    // PDF EN CACHE (invalidé dès qu'on modifie le formulaire)
+    let lastPdf = null; // { blob, filename }
+    const invalidatePdf = () => { lastPdf = null; };
+    document.getElementById('app-container').addEventListener('input', invalidatePdf);
+    document.getElementById('app-container').addEventListener('change', invalidatePdf);
+    ['sig-client', 'sig-tech'].forEach(id => document.getElementById(id).addEventListener('pointerup', invalidatePdf));
+    document.querySelectorAll('.btn-clear').forEach(b => b.addEventListener('click', invalidatePdf));
+
+    function downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = filename;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+
+    // GÉNÉRATION PDF → téléchargement
     async function generatePDF() {
+        const pdf = await buildPDF(document.getElementById('btn-submit'), 'Générer PDF');
+        if (pdf) downloadBlob(pdf.blob, pdf.filename);
+    }
+
+    // PARTAGE (mail, WhatsApp, Teams… via la feuille de partage du téléphone)
+    async function sharePDF() {
+        const btn = document.getElementById('btn-share');
+        const firstTap = !lastPdf;
+        const pdf = lastPdf || await buildPDF(btn, 'Partager');
+        if (!pdf) return;
+        const file = new File([pdf.blob], pdf.filename, { type: 'application/pdf' });
+        const client = document.getElementById('m_client').value || '';
+        const date = document.getElementById('m_date').value;
+        const dateFr = date ? date.split('-').reverse().join('/') : '';
+        const shareData = {
+            files: [file],
+            title: pdf.filename,
+            text: `Bon d'intervention${client ? ' – ' + client : ''}${dateFr ? ' du ' + dateFr : ''}`
+        };
+        if (!navigator.canShare || !navigator.canShare({ files: [file] })) {
+            alert("Le partage de fichiers n'est pas pris en charge sur cet appareil. Le PDF va être téléchargé.");
+            downloadBlob(pdf.blob, pdf.filename);
+            return;
+        }
+        try {
+            await navigator.share(shareData);
+        } catch (err) {
+            if (err.name === 'AbortError') return; // partage annulé
+            if (err.name === 'NotAllowedError' && firstTap) {
+                // la génération a pris trop de temps : le navigateur exige un nouveau geste
+                btn.textContent = 'PDF prêt – appuyez pour partager';
+                setTimeout(() => { btn.textContent = 'Partager'; }, 8000);
+                return;
+            }
+            console.error('Partage impossible :', err);
+            alert('Partage impossible. Le PDF va être téléchargé.');
+            downloadBlob(pdf.blob, pdf.filename);
+        }
+    }
+
+    // CONSTRUCTION DU PDF (blob) — réutilisée par « Générer » et « Partager »
+    async function buildPDF(submitButton, idleLabel) {
+        if (lastPdf) return lastPdf;
         const appContainer = document.getElementById('app-container');
         const navBar = document.querySelector('.bottom-nav');
         const pdfTemplate = document.getElementById('pdf-template');
-        const submitButton = document.getElementById('btn-submit');
+        const buttons = [document.getElementById('btn-submit'), document.getElementById('btn-share')];
 
         try {
-            submitButton.disabled = true;
+            buttons.forEach(b => b.disabled = true);
             submitButton.textContent = 'Création du PDF…';
 
             // 1. Transférer les champs du formulaire
@@ -410,9 +506,11 @@
 
             const clientInput = document.getElementById('m_client').value || 'Client';
             const safeClient = clientInput.replace(/[\\/:*?"<>|]+/g, '_').trim() || 'Client';
+            const dateVal = document.getElementById('m_date').value;
+            const filename = `Bon_Intervention_${safeClient}${dateVal ? '_' + dateVal : ''}.pdf`;
             const opt = {
                 margin: [10, 10, 10, 10],
-                filename: `Bon_Intervention_${safeClient}.pdf`,
+                filename,
                 image: { type: 'jpeg', quality: 0.98 },
                 html2canvas: {
                     scale: 2,
@@ -429,18 +527,48 @@
                 }
             };
 
-            await html2pdf().set(opt).from(pdfTemplate).save();
+            const blob = await html2pdf().set(opt).from(pdfTemplate).outputPdf('blob');
+            lastPdf = { blob, filename };
+            return lastPdf;
         } catch (error) {
             console.error('Erreur lors de la génération du PDF :', error);
             alert("La génération du PDF a échoué. Vérifiez votre connexion Internet et réessayez.");
+            return null;
         } finally {
             pdfTemplate.style.display = 'none';
             appContainer.style.display = 'block';
             navBar.style.display = 'flex';
-            submitButton.disabled = false;
-            submitButton.textContent = 'Générer PDF';
+            buttons.forEach(b => b.disabled = false);
+            submitButton.textContent = idleLabel;
         }
     }
+
+    // APPLICATION INSTALLABLE (PWA)
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(err => console.warn('Service worker :', err));
+        });
+    }
+    let deferredInstall = null;
+    const banner = document.getElementById('install-banner');
+    window.addEventListener('beforeinstallprompt', e => {
+        e.preventDefault();
+        deferredInstall = e;
+        try { if (localStorage.getItem('oci-install-dismissed')) return; } catch {}
+        banner.style.display = 'flex';
+    });
+    document.getElementById('install-yes').addEventListener('click', async () => {
+        banner.style.display = 'none';
+        if (!deferredInstall) return;
+        deferredInstall.prompt();
+        await deferredInstall.userChoice;
+        deferredInstall = null;
+    });
+    document.getElementById('install-no').addEventListener('click', () => {
+        banner.style.display = 'none';
+        try { localStorage.setItem('oci-install-dismissed', '1'); } catch {}
+    });
+    window.addEventListener('appinstalled', () => { banner.style.display = 'none'; });
 </script>
 </body>
 </html>
