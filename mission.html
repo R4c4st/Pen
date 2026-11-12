@@ -113,18 +113,18 @@
         <h2>✓ Mission prête</h2>
         <input type="hidden" id="link">
         <div class="actions">
-            <button type="button" class="btn btn-ok" id="mail">✉️ Préparer le mail</button>
-            <button type="button" class="btn btn-ghost" id="copy">Copier le lien seul</button>
+            <button type="button" class="btn btn-ok" id="eml">✉️ Ouvrir le mail dans Outlook</button>
             <a class="btn btn-ghost" id="open" target="_blank" rel="noopener" style="text-decoration:none">Aperçu du bon</a>
         </div>
         <ol class="steps" id="steps" hidden>
-            <li>Le mail s'est ouvert avec l'objet et le destinataire.</li>
-            <li>Cliquez dans le corps du mail et faites <kbd>Ctrl</kbd> + <kbd>V</kbd>.</li>
-            <li>Envoyez.</li>
+            <li>Ouvrez le fichier <b id="eml-name">Mission_SAV.eml</b> qui vient d'être téléchargé (barre de téléchargement du navigateur).</li>
+            <li>Le mail s'ouvre dans Outlook, déjà rempli : cliquez sur <b>Envoyer</b>.</li>
         </ol>
-        <div class="preview-label">Aperçu de ce qui sera collé :</div>
+        <div class="preview-label">Aperçu du mail :</div>
         <div class="preview" id="preview"></div>
-        <p class="hint" id="hint">Le même contenu se colle aussi dans Teams. « Copier le lien seul » sert pour un SMS ou WhatsApp.</p>
+        <p class="hint" id="hint">Autres moyens :
+            <a href="#" id="mail">copier le mail (Teams, autre messagerie)</a> ·
+            <a href="#" id="copy">copier le lien seul (SMS, WhatsApp)</a></p>
     </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -269,15 +269,58 @@ ${m.from ? `<p style="margin:0;">${esc(m.from)}</p>` : ''}
         $('steps').hidden = true;
     }, 50));
 
-    $('mail').onclick = async () => {
+    const subjectOf = m => `Mission SAV – ${m.client || ''}${m.ref ? ' – ' + m.ref : ''}${m.date ? ' – ' + frDate(m.date) : ''}`;
+
+    // Copie du mail mis en forme (Teams, autre messagerie)
+    $('mail').onclick = async e => {
+        e.preventDefault();
+        if (!current) return;
+        const ok = await copyRich(mailHtml(current.m, current.url), mailText(current.m, current.url));
+        toast(ok ? 'Mail copié – collez-le avec Ctrl+V' : 'Copie impossible : sélectionnez l\'aperçu et copiez-le');
+    };
+
+    // Brouillon Outlook (.eml) : s'ouvre directement prêt à envoyer
+    function b64utf8(s) {
+        const bytes = new TextEncoder().encode(s);
+        let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
+        return btoa(bin).replace(/.{76}/g, '$&\r\n');
+    }
+    function buildEml(m, url, to) {
+        const boundary = 'oci-' + Date.now().toString(36);
+        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>${mailHtml(m, url)}</body></html>`;
+        return [
+            'X-Unsent: 1',
+            to ? `To: ${to.replace(/[\r\n]/g, '')}` : 'To: ',
+            `Subject: =?UTF-8?B?${b64utf8(subjectOf(m)).replace(/\r\n/g, '')}?=`,
+            'MIME-Version: 1.0',
+            `Content-Type: multipart/alternative; boundary="${boundary}"`,
+            '',
+            `--${boundary}`,
+            'Content-Type: text/plain; charset=UTF-8',
+            'Content-Transfer-Encoding: base64',
+            '',
+            b64utf8(mailText(m, url).replace(/\n/g, '\r\n')),
+            `--${boundary}`,
+            'Content-Type: text/html; charset=UTF-8',
+            'Content-Transfer-Encoding: base64',
+            '',
+            b64utf8(html),
+            `--${boundary}--`,
+            ''
+        ].join('\r\n');
+    }
+    $('eml').onclick = () => {
         if (!current) return;
         const m = current.m;
-        const ok = await copyRich(mailHtml(m, current.url), mailText(m, current.url));
-        const subject = `Mission SAV – ${m.client || ''}${m.ref ? ' – ' + m.ref : ''}${m.date ? ' – ' + frDate(m.date) : ''}`;
-        const to = $('to').value.trim();
+        const name = 'Mission_SAV_' + (m.client || 'client').replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_|_$/g, '') + '.eml';
+        const blob = new Blob([buildEml(m, current.url, $('to').value.trim())], { type: 'message/rfc822' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+        $('eml-name').textContent = name;
         $('steps').hidden = false;
-        toast(ok ? 'Mail copié – faites Ctrl+V dans le message' : 'Copie impossible : sélectionnez l\'aperçu et copiez-le');
-        location.href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}`;
+        toast('Mail prêt – ouvrez le fichier téléchargé');
     };
 
     $('reset').onclick = () => {
