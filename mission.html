@@ -50,6 +50,19 @@
     .link-box input { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #374151; }
     .btn-ok { background: var(--ok); color: #fff; }
     .hint { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+    .book { margin-top: 16px; }
+    .book summary { cursor: pointer; color: var(--blue); font-weight: 600; font-size: 14px; }
+    .book-tools { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
+    .book-tools .btn { padding: 8px 12px; font-size: 13px; }
+    .book-list { max-height: 320px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+    .book-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid #eef0f3; font-size: 14px; }
+    .book-row:last-child { border-bottom: none; }
+    .book-row .info { flex: 1; min-width: 0; }
+    .book-row .sub { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .book-row button { border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 5px 9px; cursor: pointer; font-size: 13px; }
+    .book-row .del { color: #e74c3c; }
+    .book-empty { padding: 14px; color: var(--muted); font-size: 14px; }
+    .known { color: var(--ok); font-weight: 400; font-size: 12px; margin-left: 6px; }
     .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
     .toast.show { opacity: 1; }
 </style>
@@ -69,7 +82,7 @@
         <div class="card">
             <h2>Client</h2>
             <div class="grid">
-                <div class="c4"><label>Client <span class="req">*</span></label><input id="client" required placeholder="Nom de l'entreprise"></div>
+                <div class="c4"><label>Client <span class="req">*</span><span class="known" id="known" hidden>✓ client connu, coordonnées reprises</span></label><input id="client" required list="clients-list" placeholder="Nom de l'entreprise (tapez pour retrouver un client)"><datalist id="clients-list"></datalist></div>
                 <div class="c2"><label>N° de ticket / commande <span class="opt">(facultatif)</span></label><input id="ref"></div>
                 <div class="c6"><label>Adresse</label><input id="adresse" placeholder="Numéro et rue"></div>
                 <div class="c2"><label>Code postal</label><input id="cp" inputmode="numeric" maxlength="5"></div>
@@ -107,6 +120,18 @@
             <button type="button" class="btn btn-ghost" id="reset">Nouvel ordre</button>
         </div>
     </form>
+
+    <details class="card book" id="book">
+        <summary>📇 Carnet de clients (<span id="book-count">0</span>)</summary>
+        <p class="hint" style="margin-top:10px">Chaque client est ajouté automatiquement à la création d'un ordre. Le carnet est enregistré sur ce PC : exportez-le pour le sauvegarder ou le copier sur un autre poste.</p>
+        <div class="book-tools">
+            <input id="book-search" placeholder="Rechercher…" style="flex:1;min-width:180px">
+            <button type="button" class="btn btn-ghost" id="book-export">Exporter</button>
+            <button type="button" class="btn btn-ghost" id="book-import-btn">Importer</button>
+            <input type="file" id="book-import" accept=".json,application/json" hidden>
+        </div>
+        <div class="book-list" id="book-list"></div>
+    </details>
 
     <div class="card" id="result" style="margin-top:16px">
         <h2>✓ Ordre prêt</h2>
@@ -193,6 +218,7 @@
     $('f').addEventListener('submit', async e => {
         e.preventDefault();
         const m = collect();
+        upsertClient(m);
         try { localStorage.setItem(PREFS, JSON.stringify({ from: $('from').value.trim(), to: $('to').value.trim() })); } catch {}
         const url = new URL('index.html', location.href);
         url.hash = await encodeMission(m);
@@ -249,10 +275,94 @@
     };
     window.addEventListener('appinstalled', () => { $('install').hidden = true; toast('Application installée'); });
 
+    // CARNET DE CLIENTS (enregistré sur ce PC)
+    const BOOK_KEY = 'oci-clients';
+    const BOOK_FIELDS = ['adresse', 'cp', 'ville', 'contact', 'tel'];
+    const norm = s => String(s || '').trim().toLowerCase();
+    function readBook() { try { return JSON.parse(localStorage.getItem(BOOK_KEY) || '[]'); } catch { return []; } }
+    function writeBook(b) { try { localStorage.setItem(BOOK_KEY, JSON.stringify(b)); } catch {} renderBook(); }
+    function upsertClient(m) {
+        if (!m.client) return;
+        const book = readBook().filter(c => norm(c.client) !== norm(m.client));
+        const entry = { client: m.client.trim(), t: Date.now() };
+        BOOK_FIELDS.forEach(k => entry[k] = m[k] || '');
+        book.unshift(entry);
+        writeBook(book.slice(0, 500));
+    }
+    function fillClient(c) {
+        BOOK_FIELDS.forEach(k => $(k).value = c[k] || '');
+        $('known').hidden = false;
+    }
+    function renderBook() {
+        const book = readBook();
+        $('book-count').textContent = book.length;
+        const dl = $('clients-list'); dl.replaceChildren();
+        book.forEach(c => {
+            const o = document.createElement('option');
+            o.value = c.client;
+            o.label = [c.adresse, [c.cp, c.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+            dl.appendChild(o);
+        });
+        const q = norm($('book-search').value);
+        const list = $('book-list'); list.replaceChildren();
+        const shown = book.filter(c => !q || [c.client, c.ville, c.contact, c.adresse].some(v => norm(v).includes(q)));
+        if (!shown.length) {
+            const e = document.createElement('div'); e.className = 'book-empty';
+            e.textContent = book.length ? 'Aucun client ne correspond.' : 'Le carnet est vide pour l\'instant.';
+            list.appendChild(e); return;
+        }
+        shown.forEach(c => {
+            const row = document.createElement('div'); row.className = 'book-row';
+            const info = document.createElement('div'); info.className = 'info';
+            const n = document.createElement('div'); n.textContent = c.client; n.style.fontWeight = '600';
+            const s = document.createElement('div'); s.className = 'sub';
+            s.textContent = [[c.adresse, [c.cp, c.ville].filter(Boolean).join(' ')].filter(Boolean).join(', '), [c.contact, c.tel].filter(Boolean).join(' – ')].filter(Boolean).join(' · ');
+            info.append(n, s);
+            const use = document.createElement('button'); use.textContent = 'Utiliser';
+            use.onclick = () => { $('client').value = c.client; fillClient(c); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+            const del = document.createElement('button'); del.className = 'del'; del.textContent = 'Supprimer';
+            del.onclick = () => { if (confirm(`Supprimer « ${c.client} » du carnet ?`)) writeBook(readBook().filter(x => norm(x.client) !== norm(c.client))); };
+            row.append(info, use, del); list.appendChild(row);
+        });
+    }
+    // Choix d'un client connu dans la liste → coordonnées reprises
+    $('client').addEventListener('input', () => {
+        const c = readBook().find(x => norm(x.client) === norm($('client').value));
+        if (c) fillClient(c); else $('known').hidden = true;
+    });
+    $('book-search').addEventListener('input', renderBook);
+    $('book-export').onclick = () => {
+        const blob = new Blob([JSON.stringify(readBook(), null, 2)], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+        a.download = `carnet_clients_OCI_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a); a.click(); a.remove();
+    };
+    $('book-import-btn').onclick = () => $('book-import').click();
+    $('book-import').onchange = async e => {
+        const f = e.target.files[0]; if (!f) return;
+        try {
+            const data = JSON.parse(await f.text());
+            if (!Array.isArray(data)) throw new Error('format');
+            const map = new Map(readBook().map(c => [norm(c.client), c]));
+            let added = 0;
+            data.filter(c => c && c.client).forEach(c => {
+                const clean = { client: String(c.client).trim(), t: c.t || Date.now() };
+                BOOK_FIELDS.forEach(k => clean[k] = String(c[k] || ''));
+                if (!map.has(norm(clean.client))) added++;
+                map.set(norm(clean.client), clean);
+            });
+            writeBook([...map.values()].sort((a, b) => (b.t || 0) - (a.t || 0)));
+            toast(`${added} client(s) ajouté(s)`);
+        } catch { alert('Fichier invalide : choisissez un carnet exporté depuis cette page.'); }
+        e.target.value = '';
+    };
+    renderBook();
+
     $('reset').onclick = () => {
         ['client','ref','adresse','cp','ville','contact','tel','tech','travaux','note'].forEach(id => $(id).value = '');
         $('date').value = today();
         $('mat').replaceChildren();
+        $('known').hidden = true;
         $('result').style.display = 'none';
         current = null;
         window.scrollTo({ top: 0, behavior: 'smooth' });

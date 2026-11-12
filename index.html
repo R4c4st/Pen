@@ -60,6 +60,33 @@
         #install-banner button { border: none; border-radius: 8px; padding: 10px 14px; font-weight: bold; font-size: 14px; }
         #install-yes { background: #2980b9; color: #fff; }
         #install-no { background: transparent; color: #d1d5db; }
+        /* Barre d'outils sous l'en-tête */
+        .toolbar { display: flex; gap: 8px; margin: -8px 0 14px; }
+        .tool-btn { flex: 1; background: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; font-size: 14px; font-weight: 600; }
+        .save-state { text-align: center; font-size: 12px; color: #9ca3af; margin: -6px 0 10px; min-height: 14px; }
+        /* Ligne matériel : bouton scan */
+        .mat-scan { background: #fff; color: #2980b9; border: 1px solid #93c5fd; border-radius: 10px; padding: 10px; font-size: 14px; font-weight: 600; }
+        .mat-item { border-bottom: 1px dashed #e5e7eb; padding-bottom: 12px; }
+        /* Fenêtres plein écran (historique, scanner) */
+        .overlay { position: fixed; inset: 0; z-index: 2000; background: #fff; display: flex; flex-direction: column; }
+        .overlay[hidden] { display: none; }
+        .ov-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 15px; border-bottom: 1px solid #e5e7eb; }
+        .ov-head h2 { margin: 0; font-size: 18px; color: #1f2937; }
+        .ov-close { background: #f3f4f6; border: none; border-radius: 8px; padding: 10px 14px; font-weight: bold; font-size: 14px; }
+        .ov-body { flex: 1; overflow: auto; padding: 12px 15px 30px; }
+        .h-item { border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+        .h-title { font-weight: bold; color: #1f2937; }
+        .h-sub { font-size: 13px; color: #6b7280; margin-top: 2px; }
+        .h-actions { display: flex; gap: 6px; margin-top: 10px; }
+        .h-actions button { flex: 1; border: 1px solid #d1d5db; background: #fff; border-radius: 8px; padding: 9px 4px; font-size: 13px; font-weight: 600; color: #374151; }
+        .h-actions .h-share { background: #2980b9; color: #fff; border-color: #2980b9; }
+        .h-empty { text-align: center; color: #9ca3af; margin-top: 40px; }
+        #scan-ov { background: #000; }
+        #scan-ov .ov-head { border-color: #333; }
+        #scan-ov .ov-head h2 { color: #fff; }
+        #scan-video { flex: 1; width: 100%; object-fit: cover; }
+        .scan-frame { position: absolute; left: 10%; right: 10%; top: 38%; height: 22%; border: 3px solid #22c55e; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0,0,0,.35); pointer-events: none; }
+        .scan-hint { position: absolute; left: 0; right: 0; bottom: calc(30px + env(safe-area-inset-bottom)); text-align: center; color: #fff; font-size: 14px; }
         /* Carte ordre d'intervention reçu par lien */
         .mission-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; font-size: 14px; color: #1e3a5f; }
         .mission-card[hidden] { display: none; }
@@ -138,6 +165,11 @@
         <img class="brand-logo" src="data:image/png;base64,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" alt="OCI Connect">
         <h1>BON D'INTERVENTION</h1>
     </div>
+    <div class="toolbar">
+        <button type="button" class="tool-btn" onclick="openHistory()">🕘 Historique</button>
+        <button type="button" class="tool-btn" onclick="newBon()">＋ Nouveau bon</button>
+    </div>
+    <div class="save-state" id="save-state"></div>
     
     <div id="step-indicator" class="step-indicator">Étape 1 sur 4 : Client</div>
 
@@ -177,11 +209,7 @@
         
         <label>Matériel fourni / remplacé</label>
         <div id="materiel-list">
-            <div class="grid-mat mat-item">
-                <input type="text" placeholder="Réf" class="mat-ref">
-                <input type="text" placeholder="Désignation" class="mat-des">
-                <input type="number" placeholder="Qté" class="mat-qte">
-            </div>
+
         </div>
         <button type="button" class="btn-add" onclick="addMaterielRow()">+ Ajouter du matériel</button>
     </div>
@@ -216,6 +244,20 @@
             <div id="photo-preview" class="photo-preview"></div>
         </div>
     </div>
+</div>
+
+<!-- Historique des bons -->
+<div class="overlay" id="hist-ov" hidden>
+    <div class="ov-head"><h2>🕘 Derniers bons</h2><button class="ov-close" onclick="closeHistory()">Fermer</button></div>
+    <div class="ov-body" id="hist-list"></div>
+</div>
+
+<!-- Scanner code-barres -->
+<div class="overlay" id="scan-ov" hidden>
+    <div class="ov-head"><h2>Scanner le n° de série</h2><button class="ov-close" onclick="stopScan()">Annuler</button></div>
+    <video id="scan-video" playsinline muted></video>
+    <div class="scan-frame"></div>
+    <div class="scan-hint">Visez le code-barres ou le QR code de l'étiquette</div>
 </div>
 
 <div class="bottom-nav">
@@ -321,6 +363,8 @@
             document.getElementById('btn-submit').style.display = 'block';
             document.getElementById('btn-share').style.display = 'block';
             resizeCanvas(canvasClient); resizeCanvas(canvasTech);
+            if (sigData.client) padClient.fromData(sigData.client);
+            if (sigData.tech) padTech.fromData(sigData.tech);
         } else {
             document.getElementById('btn-next').style.display = 'block';
             document.getElementById('btn-submit').style.display = 'none';
@@ -341,6 +385,13 @@
     }
     const padClient = new SignaturePad(canvasClient, { penColor: "rgb(0, 0, 128)", minWidth: 1.5, maxWidth: 3 });
     const padTech = new SignaturePad(canvasTech, { penColor: "rgb(0, 0, 128)", minWidth: 1.5, maxWidth: 3 });
+    // Tracés gardés en mémoire : ils survivent au redimensionnement et à la fermeture de l'appli
+    const sigData = { client: null, tech: null };
+    padClient.addEventListener('endStroke', () => { sigData.client = padClient.toData(); invalidatePdf(); saveDraftSoon(); });
+    padTech.addEventListener('endStroke', () => { sigData.tech = padTech.toData(); invalidatePdf(); saveDraftSoon(); });
+    document.querySelectorAll('.btn-clear').forEach((b, i) => b.addEventListener('click', () => {
+        sigData[i === 0 ? 'client' : 'tech'] = null; saveDraftSoon();
+    }));
 
     // PHOTOS DE L'INTERVENTION
     const photoInput = document.getElementById('m_photos');
@@ -362,19 +413,157 @@
         const list = document.getElementById('materiel-list');
         const row = document.createElement('div');
         row.className = 'grid-mat mat-item';
-        row.innerHTML = `<input type="text" placeholder="Réf" class="mat-ref"><input type="text" placeholder="Désignation" class="mat-des"><input type="number" placeholder="Qté" class="mat-qte">`;
+        row.innerHTML = `<input type="text" placeholder="Réf" class="mat-ref"><input type="text" placeholder="Désignation / N° de série" class="mat-des"><input type="number" placeholder="Qté" class="mat-qte"><button type="button" class="mat-scan">📷 Scanner le n° de série</button>`;
         list.appendChild(row);
+        return row;
+    }
+    function setMateriel(items) {
+        const list = document.getElementById('materiel-list');
+        list.replaceChildren();
+        (items && items.length ? items : [{}]).forEach(x => {
+            const row = addMaterielRow();
+            row.querySelector('.mat-ref').value = x.ref || '';
+            row.querySelector('.mat-des').value = x.des || '';
+            row.querySelector('.mat-qte').value = x.qte || '';
+        });
+    }
+    function getMateriel() {
+        return [...document.querySelectorAll('.mat-item')].map(r => ({
+            ref: r.querySelector('.mat-ref').value, des: r.querySelector('.mat-des').value, qte: r.querySelector('.mat-qte').value
+        }));
     }
 
-    // DATE DU JOUR PRÉ-REMPLIE
-    (function prefillDate() {
-        const input = document.getElementById('m_date');
-        if (!input.value) {
-            const d = new Date();
-            const pad = n => String(n).padStart(2, '0');
-            input.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    // SCAN CODE-BARRES (n° de série)
+    let scanStream = null, scanTimer = null, scanTarget = null;
+    document.getElementById('materiel-list').addEventListener('click', e => {
+        const btn = e.target.closest('.mat-scan');
+        if (btn) startScan(btn.closest('.mat-item').querySelector('.mat-des'));
+    });
+    async function startScan(target) {
+        if (!('BarcodeDetector' in window)) {
+            alert("Le scan n'est pas disponible sur ce navigateur. Utilisez Chrome sur Android, ou saisissez le numéro.");
+            return;
         }
+        scanTarget = target;
+        try {
+            const formats = await BarcodeDetector.getSupportedFormats();
+            const detector = new BarcodeDetector({ formats });
+            scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1920 } }, audio: false });
+            const video = document.getElementById('scan-video');
+            video.srcObject = scanStream;
+            document.getElementById('scan-ov').hidden = false;
+            await video.play();
+            scanTimer = setInterval(async () => {
+                try {
+                    const codes = await detector.detect(video);
+                    if (codes.length) {
+                        const code = codes[0].rawValue.trim();
+                        stopScan();
+                        if (navigator.vibrate) navigator.vibrate(80);
+                        scanTarget.value = scanTarget.value.trim() ? scanTarget.value.trim() + ' – SN ' + code : code;
+                        scanTarget.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                } catch {}
+            }, 250);
+        } catch (err) {
+            stopScan();
+            alert("Impossible d'ouvrir l'appareil photo : " + (err.message || err));
+        }
+    }
+    function stopScan() {
+        clearInterval(scanTimer); scanTimer = null;
+        if (scanStream) scanStream.getTracks().forEach(t => t.stop());
+        scanStream = null;
+        document.getElementById('scan-ov').hidden = true;
+    }
+
+    // DATE DU JOUR
+    function todayISO() {
+        const d = new Date(), pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+    const frDate = d => d ? d.split('-').reverse().join('/') : '';
+
+    // BROUILLON SAUVEGARDÉ AUTOMATIQUEMENT
+    const DRAFT_KEY = 'oci-draft', TECH_KEY = 'oci-tech';
+    const FIELD_IDS = ['m_date', 'm_ref', 'm_client', 'm_adresse', 'm_cp', 'm_ville', 'm_prevus', 'm_realises',
+                       'm_tech', 'm_nomclient', 'm_arrivee', 'm_depart', 'm_kms'];
+    let bonId = null, saveTimer = null;
+    const newId = () => 'BI' + Date.now().toString(36);
+
+    function snapshot() {
+        const fields = {};
+        FIELD_IDS.forEach(id => fields[id] = document.getElementById(id).value);
+        return { id: bonId, t: Date.now(), fields, mat: getMateriel(), sig: { ...sigData } };
+    }
+    function hasContent() {
+        const s = snapshot();
+        return ['m_client', 'm_prevus', 'm_realises', 'm_nomclient', 'm_arrivee'].some(k => s.fields[k].trim())
+            || s.mat.some(x => x.ref || x.des || x.qte) || sigData.client || sigData.tech;
+    }
+    function saveDraft() {
+        try {
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(snapshot()));
+            const d = new Date();
+            document.getElementById('save-state').textContent = `✓ Brouillon enregistré à ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        } catch {}
+    }
+    function saveDraftSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(saveDraft, 400); }
+    function loadData(s) {
+        FIELD_IDS.forEach(id => { document.getElementById(id).value = (s.fields && s.fields[id]) || ''; });
+        setMateriel(s.mat);
+        sigData.client = (s.sig && s.sig.client) || null;
+        sigData.tech = (s.sig && s.sig.tech) || null;
+        padClient.clear(); padTech.clear();
+        if (currentStep === totalSteps) {
+            if (sigData.client) padClient.fromData(sigData.client);
+            if (sigData.tech) padTech.fromData(sigData.tech);
+        }
+    }
+    function goToStep(n) { if (n !== currentStep) changeStep(n - currentStep); }
+
+    // Nom du technicien mémorisé
+    document.getElementById('m_tech').addEventListener('change', e => {
+        try { localStorage.setItem(TECH_KEY, e.target.value.trim()); } catch {}
+    });
+    function rememberedTech() { try { return localStorage.getItem(TECH_KEY) || ''; } catch { return ''; } }
+
+    function resetForm() {
+        bonId = newId();
+        loadData({ fields: { m_date: todayISO(), m_tech: rememberedTech() }, mat: [] });
+        selectedPhotos = [];
+        document.getElementById('m_photos').value = '';
+        document.getElementById('photo-preview').replaceChildren();
+        document.getElementById('mission-card').hidden = true;
+        try { localStorage.removeItem(MISSION_KEY); } catch {}
+        lastPdf = null;
+        goToStep(1);
+        saveDraft();
+    }
+    function newBon() {
+        if (hasContent() && !confirm('Commencer un nouveau bon ? Le bon en cours sera effacé (s\'il a été généré, il reste dans l\'historique).')) return;
+        resetForm();
+    }
+
+    // Démarrage : on reprend le brouillon s'il existe
+    (function restoreDraft() {
+        let s = null;
+        try { s = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null'); } catch {}
+        if (s && s.fields) {
+            bonId = s.id || newId();
+            loadData(s);
+            if (hasContent()) document.getElementById('save-state').textContent = '↺ Bon en cours repris' + (s.fields.m_client ? ' – ' + s.fields.m_client : '');
+            if (!document.getElementById('m_date').value) document.getElementById('m_date').value = todayISO();
+        } else {
+            bonId = newId();
+            setMateriel([]);
+            document.getElementById('m_date').value = todayISO();
+        }
+        if (!document.getElementById('m_tech').value) document.getElementById('m_tech').value = rememberedTech();
     })();
+    document.getElementById('app-container').addEventListener('input', saveDraftSoon);
+    document.getElementById('app-container').addEventListener('change', saveDraftSoon);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) saveDraft(); });
 
     // MISSION SAV REÇUE PAR LIEN (#z=… compressé ou #m=… simple)
     const MISSION_KEY = 'oci-mission';
@@ -397,23 +586,15 @@
         return (data && typeof data === 'object') ? data : null;
     }
 
-    function applyMission(m) {
+    function fillFromMission(m) {
         const set = (id, v) => { if (v != null && String(v).trim() !== '') document.getElementById(id).value = String(v); };
         set('m_date', m.date); set('m_ref', m.ref); set('m_client', m.client);
         set('m_adresse', m.adresse); set('m_cp', m.cp); set('m_ville', m.ville);
         set('m_prevus', m.travaux); set('m_tech', m.tech); set('m_nomclient', m.contact);
-        if (Array.isArray(m.materiel) && m.materiel.length) {
-            const list = document.getElementById('materiel-list');
-            list.replaceChildren();
-            m.materiel.forEach(x => {
-                addMaterielRow();
-                const row = list.lastElementChild;
-                row.querySelector('.mat-ref').value = x.ref || '';
-                row.querySelector('.mat-des').value = x.des || '';
-                row.querySelector('.mat-qte').value = x.qte || '';
-            });
-        }
-        // Carte d'infos
+        if (Array.isArray(m.materiel) && m.materiel.length) setMateriel(m.materiel);
+        saveDraft();
+    }
+    function showMissionCard(m) {
         const card = document.getElementById('mission-card');
         document.getElementById('mc-ref').textContent = m.ref ? 'N° ' + m.ref : '';
         document.getElementById('mc-from').textContent = m.from ? 'Envoyé par ' + m.from : '';
@@ -436,13 +617,11 @@
     });
 
     (async function loadMission() {
-        let mission = null;
+        let mission = null, fromLink = false;
         if (location.hash.length > 3) {
             try {
                 mission = await decodeMission(location.hash);
-                if (mission) {
-                    try { localStorage.setItem(MISSION_KEY, JSON.stringify({ t: Date.now(), m: mission })); } catch {}
-                }
+                fromLink = !!mission;
             } catch (e) {
                 console.error('Lien d\'ordre d\'intervention illisible :', e);
                 alert("Le lien de l'ordre d'intervention est incomplet ou abîmé. Demandez-en un nouveau.");
@@ -455,7 +634,19 @@
                 else localStorage.removeItem(MISSION_KEY);
             } catch {}
         }
-        if (mission) applyMission(mission);
+        if (!mission) return;
+        if (fromLink) {
+            // Nouvel ordre reçu : il remplace le bon en cours (après confirmation s'il y a déjà du contenu)
+            const cur = document.getElementById('m_client').value.trim();
+            if (hasContent() && cur !== (mission.client || '').trim()
+                && !confirm(`Un bon est en cours${cur ? ' (' + cur + ')' : ''}. Le remplacer par le nouvel ordre d'intervention ?`)) {
+                return;
+            }
+            if (hasContent() && cur !== (mission.client || '').trim()) resetForm();
+            try { localStorage.setItem(MISSION_KEY, JSON.stringify({ t: Date.now(), m: mission })); } catch {}
+            fillFromMission(mission);
+        }
+        showMissionCard(mission);
     })();
 
     // PDF EN CACHE (invalidé dès qu'on modifie le formulaire)
@@ -474,6 +665,76 @@
         setTimeout(() => URL.revokeObjectURL(url), 10000);
     }
 
+    // HISTORIQUE DES 20 DERNIERS BONS (stockés sur le téléphone)
+    const HIST_MAX = 20;
+    function histDB() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open('oci-bons', 1);
+            req.onupgradeneeded = () => req.result.createObjectStore('bons', { keyPath: 'id' });
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function histTx(mode, fn) {
+        const db = await histDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('bons', mode);
+            const out = fn(tx.objectStore('bons'));
+            tx.oncomplete = () => resolve(out && out.result !== undefined ? out.result : out);
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+    async function saveToHistory(pdf) {
+        const s = snapshot();
+        await histTx('readwrite', st => st.put({
+            id: s.id, t: Date.now(), client: s.fields.m_client, ref: s.fields.m_ref, date: s.fields.m_date,
+            filename: pdf.filename, subject: pdf.subject, blob: pdf.blob, data: s
+        }));
+        const all = await histTx('readonly', st => st.getAll());
+        all.sort((a, b) => b.t - a.t).slice(HIST_MAX).forEach(old => histTx('readwrite', st => st.delete(old.id)));
+    }
+    async function openHistory() {
+        const list = document.getElementById('hist-list');
+        list.replaceChildren();
+        document.getElementById('hist-ov').hidden = false;
+        let items = [];
+        try { items = (await histTx('readonly', st => st.getAll())).sort((a, b) => b.t - a.t); } catch {}
+        if (!items.length) {
+            const p = document.createElement('p'); p.className = 'h-empty';
+            p.textContent = "Aucun bon pour l'instant. Chaque PDF généré ou partagé apparaîtra ici.";
+            list.appendChild(p); return;
+        }
+        items.forEach(it => {
+            const div = document.createElement('div'); div.className = 'h-item';
+            const t = document.createElement('div'); t.className = 'h-title'; t.textContent = it.client || 'Client non renseigné';
+            const sub = document.createElement('div'); sub.className = 'h-sub';
+            const d = new Date(it.t);
+            sub.textContent = [frDate(it.date), it.ref ? 'N° ' + it.ref : '', 'généré le ' + d.toLocaleDateString('fr-FR') + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })].filter(Boolean).join(' · ');
+            const act = document.createElement('div'); act.className = 'h-actions';
+            const mk = (label, cls, fn) => { const b = document.createElement('button'); b.textContent = label; if (cls) b.className = cls; b.onclick = fn; act.appendChild(b); };
+            mk('Partager', 'h-share', () => shareBlob(it.blob, it.filename, it.subject || it.filename));
+            mk('Télécharger', '', () => downloadBlob(it.blob, it.filename));
+            mk('Dupliquer', '', () => duplicateBon(it.data));
+            div.append(t, sub, act); list.appendChild(div);
+        });
+    }
+    function closeHistory() { document.getElementById('hist-ov').hidden = true; }
+    async function shareBlob(blob, filename, subject) {
+        const file = new File([blob], filename, { type: 'application/pdf' });
+        if (!navigator.canShare || !navigator.canShare({ files: [file] })) { downloadBlob(blob, filename); return; }
+        try { await navigator.share({ files: [file], title: subject, text: subject + "\n\nCi-joint le bon d'intervention." }); }
+        catch (err) { if (err.name !== 'AbortError') downloadBlob(blob, filename); }
+    }
+    // Dupliquer : même client et mêmes travaux à effectuer, le reste est vierge
+    function duplicateBon(data) {
+        if (hasContent() && !confirm('Remplacer le bon en cours par une copie de ce bon ?')) return;
+        resetForm();
+        const keep = ['m_client', 'm_adresse', 'm_cp', 'm_ville', 'm_prevus', 'm_nomclient'];
+        keep.forEach(id => { if (data.fields && data.fields[id]) document.getElementById(id).value = data.fields[id]; });
+        saveDraft();
+        closeHistory();
+    }
+
     // GÉNÉRATION PDF → téléchargement
     async function generatePDF() {
         const pdf = await buildPDF(document.getElementById('btn-submit'), 'Générer PDF');
@@ -487,13 +748,10 @@
         const pdf = lastPdf || await buildPDF(btn, 'Partager');
         if (!pdf) return;
         const file = new File([pdf.blob], pdf.filename, { type: 'application/pdf' });
-        const client = document.getElementById('m_client').value || '';
-        const date = document.getElementById('m_date').value;
-        const dateFr = date ? date.split('-').reverse().join('/') : '';
         const shareData = {
             files: [file],
-            title: pdf.filename,
-            text: `Bon d'intervention${client ? ' – ' + client : ''}${dateFr ? ' du ' + dateFr : ''}`
+            title: pdf.subject,
+            text: pdf.subject + "\n\nCi-joint le bon d'intervention."
         };
         if (!navigator.canShare || !navigator.canShare({ files: [file] })) {
             alert("Le partage de fichiers n'est pas pris en charge sur cet appareil. Le PDF va être téléchargé.");
@@ -621,7 +879,11 @@
             const clientInput = document.getElementById('m_client').value || 'Client';
             const safeClient = clientInput.replace(/[\\/:*?"<>|]+/g, '_').trim() || 'Client';
             const dateVal = document.getElementById('m_date').value;
-            const filename = `Bon_Intervention_${safeClient}${dateVal ? '_' + dateVal : ''}.pdf`;
+            const refVal = document.getElementById('m_ref').value.trim();
+            const safeRef = refVal.replace(/[\\/:*?"<>|\s]+/g, '_');
+            const filename = `Bon_Intervention_${safeClient}${safeRef ? '_' + safeRef : ''}${dateVal ? '_' + dateVal : ''}.pdf`;
+            // Objet prêt pour le mail de retour : client – n° de ticket – date
+            const subject = ["Bon d'intervention", clientInput.trim(), refVal ? 'N° ' + refVal : '', frDate(dateVal)].filter(Boolean).join(' – ');
             const opt = {
                 margin: [10, 10, 10, 10],
                 filename,
@@ -643,7 +905,8 @@
             };
 
             const blob = await html2pdf().set(opt).from(pdfTemplate).outputPdf('blob');
-            lastPdf = { blob, filename };
+            lastPdf = { blob, filename, subject };
+            saveToHistory(lastPdf).catch(e => console.warn('Historique :', e));
             return lastPdf;
         } catch (error) {
             console.error('Erreur lors de la génération du PDF :', error);
