@@ -60,6 +60,17 @@
         #install-banner button { border: none; border-radius: 8px; padding: 10px 14px; font-weight: bold; font-size: 14px; }
         #install-yes { background: #2980b9; color: #fff; }
         #install-no { background: transparent; color: #d1d5db; }
+        /* Carte mission SAV reçue par lien */
+        .mission-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; font-size: 14px; color: #1e3a5f; }
+        .mission-card[hidden] { display: none; }
+        .mc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+        .mc-head strong { color: #2980b9; font-size: 15px; }
+        .mc-ref { font-weight: bold; }
+        .mc-line { margin-top: 4px; }
+        .mc-note { margin-top: 8px; padding: 8px 10px; background: #fff; border-radius: 8px; white-space: pre-wrap; border-left: 3px solid #f59e0b; }
+        .mc-actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+        .mc-btn { flex: 1; min-width: 110px; text-align: center; text-decoration: none; background: #2980b9; color: #fff; padding: 10px; border-radius: 8px; font-weight: bold; font-size: 14px; border: none; }
+        .mc-btn.secondary { background: #fff; color: #64748b; border: 1px solid #cbd5e1; }
 
         /* =========================================
            2. GABARIT PDF (Fixé en haut à gauche)
@@ -133,7 +144,19 @@
     <!-- Étape 1 -->
     <div class="step active" id="step-1">
         <h2 class="step-title">Informations générales</h2>
+        <div id="mission-card" class="mission-card" hidden>
+            <div class="mc-head"><strong>📋 Mission SAV</strong><span class="mc-ref" id="mc-ref"></span></div>
+            <div class="mc-line" id="mc-from"></div>
+            <div class="mc-line" id="mc-contact"></div>
+            <div class="mc-note" id="mc-note" hidden></div>
+            <div class="mc-actions">
+                <a class="mc-btn" id="mc-tel" hidden>📞 Appeler</a>
+                <a class="mc-btn" id="mc-map" target="_blank" rel="noopener" hidden>🧭 Itinéraire</a>
+                <button type="button" class="mc-btn secondary" id="mc-close">Terminer la mission</button>
+            </div>
+        </div>
         <div class="form-group"><label>Date d'intervention</label><input type="date" id="m_date"></div>
+        <div class="form-group"><label>N° SAV / affaire</label><input type="text" id="m_ref" placeholder="Facultatif"></div>
         <div class="form-group"><label>Client</label><input type="text" id="m_client" placeholder="Nom de l'entreprise"></div>
         <div class="form-group"><label>Adresse</label><input type="text" id="m_adresse" placeholder="Numéro et rue"></div>
         <div class="form-group"><label>Code Postal</label><input type="number" id="m_cp"></div>
@@ -218,7 +241,8 @@
 
     <div class="pdf-section pdf-grid-4">
         <div class="pdf-field"><span class="pdf-label">Date d'intervention</span><div class="pdf-value" id="p_date"></div></div>
-        <div class="pdf-field span-3"><span class="pdf-label">Client</span><div class="pdf-value" id="p_client"></div></div>
+        <div class="pdf-field"><span class="pdf-label">N° SAV / affaire</span><div class="pdf-value" id="p_ref"></div></div>
+        <div class="pdf-field span-2"><span class="pdf-label">Client</span><div class="pdf-value" id="p_client"></div></div>
         <div class="pdf-field span-2"><span class="pdf-label">Adresse</span><div class="pdf-value" id="p_adresse"></div></div>
         <div class="pdf-field"><span class="pdf-label">Code Postal</span><div class="pdf-value" id="p_cp"></div></div>
         <div class="pdf-field"><span class="pdf-label">Ville</span><div class="pdf-value" id="p_ville"></div></div>
@@ -352,6 +376,88 @@
         }
     })();
 
+    // MISSION SAV REÇUE PAR LIEN (#z=… compressé ou #m=… simple)
+    const MISSION_KEY = 'oci-mission';
+    const MISSION_TTL = 3 * 24 * 3600 * 1000; // une mission enregistrée reste 3 jours
+
+    function b64urlToBytes(s) {
+        s = s.replace(/-/g, '+').replace(/_/g, '/');
+        while (s.length % 4) s += '=';
+        return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+    }
+    async function decodeMission(hash) {
+        const m = hash.match(/^#([zm])=(.+)$/);
+        if (!m) return null;
+        let bytes = b64urlToBytes(m[2]);
+        if (m[1] === 'z') {
+            const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+            bytes = new Uint8Array(await new Response(stream).arrayBuffer());
+        }
+        const data = JSON.parse(new TextDecoder().decode(bytes));
+        return (data && typeof data === 'object') ? data : null;
+    }
+
+    function applyMission(m) {
+        const set = (id, v) => { if (v != null && String(v).trim() !== '') document.getElementById(id).value = String(v); };
+        set('m_date', m.date); set('m_ref', m.ref); set('m_client', m.client);
+        set('m_adresse', m.adresse); set('m_cp', m.cp); set('m_ville', m.ville);
+        set('m_prevus', m.travaux); set('m_tech', m.tech); set('m_nomclient', m.contact);
+        if (Array.isArray(m.materiel) && m.materiel.length) {
+            const list = document.getElementById('materiel-list');
+            list.replaceChildren();
+            m.materiel.forEach(x => {
+                addMaterielRow();
+                const row = list.lastElementChild;
+                row.querySelector('.mat-ref').value = x.ref || '';
+                row.querySelector('.mat-des').value = x.des || '';
+                row.querySelector('.mat-qte').value = x.qte || '';
+            });
+        }
+        // Carte d'infos
+        const card = document.getElementById('mission-card');
+        document.getElementById('mc-ref').textContent = m.ref ? 'N° ' + m.ref : '';
+        document.getElementById('mc-from').textContent = m.from ? 'Envoyée par ' + m.from : '';
+        const contact = [m.contact, m.tel].filter(Boolean).join(' – ');
+        document.getElementById('mc-contact').textContent = contact ? 'Contact sur site : ' + contact : '';
+        const note = document.getElementById('mc-note');
+        note.textContent = m.note || ''; note.hidden = !m.note;
+        const tel = document.getElementById('mc-tel');
+        const telClean = String(m.tel || '').replace(/[^\d+]/g, '');
+        tel.hidden = !telClean; if (telClean) tel.href = 'tel:' + telClean;
+        const addr = [m.adresse, m.cp, m.ville].filter(Boolean).join(' ');
+        const map = document.getElementById('mc-map');
+        map.hidden = !addr; if (addr) map.href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(addr);
+        card.hidden = false;
+    }
+
+    document.getElementById('mc-close').addEventListener('click', () => {
+        document.getElementById('mission-card').hidden = true;
+        try { localStorage.removeItem(MISSION_KEY); } catch {}
+    });
+
+    (async function loadMission() {
+        let mission = null;
+        if (location.hash.length > 3) {
+            try {
+                mission = await decodeMission(location.hash);
+                if (mission) {
+                    try { localStorage.setItem(MISSION_KEY, JSON.stringify({ t: Date.now(), m: mission })); } catch {}
+                }
+            } catch (e) {
+                console.error('Lien de mission illisible :', e);
+                alert("Le lien de mission est incomplet ou abîmé. Demandez-en un nouveau.");
+            }
+            history.replaceState(null, '', location.pathname + location.search);
+        } else {
+            try {
+                const saved = JSON.parse(localStorage.getItem(MISSION_KEY) || 'null');
+                if (saved && Date.now() - saved.t < MISSION_TTL) mission = saved.m;
+                else localStorage.removeItem(MISSION_KEY);
+            } catch {}
+        }
+        if (mission) applyMission(mission);
+    })();
+
     // PDF EN CACHE (invalidé dès qu'on modifie le formulaire)
     let lastPdf = null; // { blob, filename }
     const invalidatePdf = () => { lastPdf = null; };
@@ -423,12 +529,15 @@
             submitButton.textContent = 'Création du PDF…';
 
             // 1. Transférer les champs du formulaire
-            const fields = ['date', 'client', 'adresse', 'cp', 'ville', 'prevus', 'realises',
+            const fields = ['date', 'ref', 'client', 'adresse', 'cp', 'ville', 'prevus', 'realises',
                             'tech', 'nomclient', 'arrivee', 'depart', 'kms'];
             fields.forEach(f => {
                 document.getElementById('p_' + f).textContent =
                     document.getElementById('m_' + f).value || '';
             });
+            // Date au format français sur le PDF
+            const dv = document.getElementById('m_date').value;
+            if (dv) document.getElementById('p_date').textContent = dv.split('-').reverse().join('/');
 
             // 2. Transférer le matériel sans injecter de HTML saisi par l'utilisateur
             const tbody = document.getElementById('p_materiel_body');

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mission SAV – OCI CONNECT</title>
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<style>
+    :root {
+        --blue: #2980b9; --blue-dark: #1f6391; --blue-soft: #eff6ff;
+        --ink: #1f2937; --muted: #6b7280; --line: #d1d5db; --bg: #f3f5f8; --card: #fff;
+        --ok: #27ae60;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; font-size: 15px; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 60px; }
+    header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    header img { width: 52px; height: 52px; border-radius: 10px; }
+    header h1 { margin: 0; font-size: 22px; }
+    header p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+
+    .card { background: var(--card); border-radius: 14px; padding: 20px 22px; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 16px; }
+    .card h2 { margin: 0 0 14px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--blue); }
+    .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px 14px; }
+    .c2 { grid-column: span 2; } .c3 { grid-column: span 3; } .c4 { grid-column: span 4; } .c6 { grid-column: span 6; }
+    @media (max-width: 640px) { .grid > * { grid-column: span 6 !important; } }
+
+    label { display: block; font-weight: 600; font-size: 13px; color: #4b5563; margin-bottom: 5px; }
+    label .opt { font-weight: 400; color: var(--muted); }
+    input, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; background: #fafbfc; }
+    input:focus, textarea:focus { outline: none; border-color: var(--blue); background: #fff; box-shadow: 0 0 0 3px rgba(41,128,185,.15); }
+    textarea { resize: vertical; min-height: 90px; }
+    .req { color: #e74c3c; }
+
+    .mat-row { display: grid; grid-template-columns: 1fr 2.4fr 70px 36px; gap: 8px; margin-bottom: 8px; }
+    .mat-row button { border: 1px solid var(--line); background: #fff; border-radius: 8px; color: #e74c3c; font-size: 18px; cursor: pointer; }
+    .btn-add { background: var(--blue-soft); color: var(--blue); border: 2px dashed #93c5fd; padding: 9px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; font-size: 14px; }
+
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn { border: none; border-radius: 10px; padding: 13px 20px; font-weight: bold; font-size: 15px; cursor: pointer; }
+    .btn-primary { background: var(--blue); color: #fff; flex: 1; }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-ghost { background: #fff; color: #4b5563; border: 1px solid var(--line); }
+
+    #result { display: none; border: 2px solid var(--ok); }
+    #result h2 { color: var(--ok); }
+    .link-box { display: flex; gap: 8px; margin-bottom: 12px; }
+    .link-box input { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #374151; }
+    .btn-ok { background: var(--ok); color: #fff; }
+    .hint { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+    .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+    <header>
+        <img src="icons/icon-192.png" alt="">
+        <div>
+            <h1>Nouvelle mission SAV</h1>
+            <p>Remplissez ce qui est connu : le technicien reçoit un lien qui ouvre son bon d'intervention déjà pré-rempli.</p>
+        </div>
+    </header>
+
+    <form id="f" autocomplete="off">
+        <div class="card">
+            <h2>Client</h2>
+            <div class="grid">
+                <div class="c4"><label>Client <span class="req">*</span></label><input id="client" required placeholder="Nom de l'entreprise"></div>
+                <div class="c2"><label>N° SAV / affaire <span class="opt">(facultatif)</span></label><input id="ref"></div>
+                <div class="c6"><label>Adresse</label><input id="adresse" placeholder="Numéro et rue"></div>
+                <div class="c2"><label>Code postal</label><input id="cp" inputmode="numeric" maxlength="5"></div>
+                <div class="c4"><label>Ville</label><input id="ville"></div>
+                <div class="c3"><label>Contact sur site</label><input id="contact" placeholder="Nom du contact"></div>
+                <div class="c3"><label>Téléphone du contact</label><input id="tel" type="tel" placeholder="06 12 34 56 78"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Intervention</h2>
+            <div class="grid">
+                <div class="c2"><label>Date prévue</label><input id="date" type="date"></div>
+                <div class="c4"><label>Technicien <span class="opt">(facultatif)</span></label><input id="tech"></div>
+                <div class="c6"><label>Travaux à effectuer <span class="req">*</span></label><textarea id="travaux" required placeholder="Description du problème / de la demande client"></textarea></div>
+                <div class="c6">
+                    <label>Matériel à prévoir <span class="opt">(pré-remplit le tableau matériel)</span></label>
+                    <div id="mat"></div>
+                    <button type="button" class="btn-add" id="add-mat">+ Ajouter du matériel</button>
+                </div>
+                <div class="c6"><label>Note pour le technicien <span class="opt">(non imprimée sur le bon)</span></label><textarea id="note" style="min-height:60px" placeholder="Code portail, horaires d'accès, interlocuteur…"></textarea></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Envoi</h2>
+            <div class="grid">
+                <div class="c3"><label>Envoyé par</label><input id="from" placeholder="Votre prénom"></div>
+                <div class="c3"><label>Mail du technicien</label><input id="to" type="email" placeholder="technicien@…"></div>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Créer la mission</button>
+            <button type="button" class="btn btn-ghost" id="reset">Nouvelle mission</button>
+        </div>
+    </form>
+
+    <div class="card" id="result" style="margin-top:16px">
+        <h2>✓ Mission prête</h2>
+        <div class="link-box">
+            <input id="link" readonly>
+            <button type="button" class="btn btn-ghost" id="copy">Copier</button>
+        </div>
+        <div class="actions">
+            <button type="button" class="btn btn-ok" id="mail">✉️ Envoyer par mail</button>
+            <a class="btn btn-ghost" id="open" target="_blank" rel="noopener" style="text-decoration:none">Aperçu du bon</a>
+        </div>
+        <p class="hint" id="hint">Vous pouvez aussi coller le lien dans Teams, WhatsApp Web ou un SMS.</p>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+    const $ = id => document.getElementById(id);
+    const PREFS = 'oci-mission-prefs';
+
+    // Préférences mémorisées sur ce PC (nom de l'émettrice, mail du technicien)
+    try {
+        const p = JSON.parse(localStorage.getItem(PREFS) || '{}');
+        if (p.from) $('from').value = p.from;
+        if (p.to) $('to').value = p.to;
+    } catch {}
+
+    function today() {
+        const d = new Date(), pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    }
+    $('date').value = today();
+
+    function addMat(v = {}) {
+        const row = document.createElement('div');
+        row.className = 'mat-row';
+        row.innerHTML = '<input class="m-ref" placeholder="Réf"><input class="m-des" placeholder="Désignation"><input class="m-qte" type="number" min="0" placeholder="Qté"><button type="button" title="Supprimer">×</button>';
+        row.querySelector('.m-ref').value = v.ref || '';
+        row.querySelector('.m-des').value = v.des || '';
+        row.querySelector('.m-qte').value = v.qte || '';
+        row.querySelector('button').onclick = () => row.remove();
+        $('mat').appendChild(row);
+    }
+    $('add-mat').onclick = () => addMat();
+
+    function toast(msg) {
+        const t = $('toast'); t.textContent = msg; t.classList.add('show');
+        clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    function bytesToB64url(bytes) {
+        let bin = '';
+        bytes.forEach(b => bin += String.fromCharCode(b));
+        return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    async function encodeMission(obj) {
+        const raw = new TextEncoder().encode(JSON.stringify(obj));
+        if ('CompressionStream' in window) {
+            const stream = new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+            const z = new Uint8Array(await new Response(stream).arrayBuffer());
+            return 'z=' + bytesToB64url(z);
+        }
+        return 'm=' + bytesToB64url(raw);
+    }
+
+    function collect() {
+        const v = id => $(id).value.trim();
+        const m = {
+            date: v('date'), ref: v('ref'), client: v('client'), adresse: v('adresse'),
+            cp: v('cp'), ville: v('ville'), contact: v('contact'), tel: v('tel'),
+            tech: v('tech'), travaux: v('travaux'), note: v('note'), from: v('from')
+        };
+        const mat = [...document.querySelectorAll('.mat-row')].map(r => ({
+            ref: r.querySelector('.m-ref').value.trim(),
+            des: r.querySelector('.m-des').value.trim(),
+            qte: r.querySelector('.m-qte').value.trim()
+        })).filter(x => x.ref || x.des || x.qte);
+        if (mat.length) m.materiel = mat;
+        Object.keys(m).forEach(k => { if (m[k] === '') delete m[k]; });
+        return m;
+    }
+
+    let current = null;
+    $('f').addEventListener('submit', async e => {
+        e.preventDefault();
+        const m = collect();
+        try { localStorage.setItem(PREFS, JSON.stringify({ from: $('from').value.trim(), to: $('to').value.trim() })); } catch {}
+        const url = new URL('index.html', location.href);
+        url.hash = await encodeMission(m);
+        current = { m, url: url.toString() };
+        $('link').value = current.url;
+        $('open').href = current.url;
+        $('result').style.display = 'block';
+        $('result').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    async function copyLink() {
+        try { await navigator.clipboard.writeText(current.url); }
+        catch { $('link').select(); document.execCommand('copy'); }
+    }
+    $('copy').onclick = async () => { if (!current) return; await copyLink(); toast('Lien copié'); };
+
+    $('mail').onclick = async () => {
+        if (!current) return;
+        const m = current.m;
+        const fr = d => d ? d.split('-').reverse().join('/') : '';
+        const subject = `Mission SAV – ${m.client || ''}${m.ref ? ' – ' + m.ref : ''}`;
+        const lines = [
+            'Bonjour,', '',
+            'Nouvelle mission SAV :',
+            `Client : ${m.client || ''}`,
+            [m.adresse, m.cp, m.ville].filter(Boolean).length ? `Adresse : ${[m.adresse, [m.cp, m.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ')}` : null,
+            m.date ? `Date prévue : ${fr(m.date)}` : null,
+            (m.contact || m.tel) ? `Contact : ${[m.contact, m.tel].filter(Boolean).join(' – ')}` : null,
+            '', 'Bon d\'intervention pré-rempli (ouvrir sur le téléphone) :', current.url, '',
+            m.from || ''
+        ].filter(l => l !== null);
+        const to = $('to').value.trim();
+        let href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\r\n'))}`;
+        if (href.length > 1900) {
+            // Lien trop long pour certains logiciels de mail : on le copie et on l'indique dans le mail
+            await copyLink();
+            const short = lines.map(l => l === current.url ? '[collez ici le lien : Ctrl+V]' : l);
+            href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(short.join('\r\n'))}`;
+            $('hint').textContent = 'Le lien est long : il a été copié, collez-le dans le mail (Ctrl+V) à l\'endroit indiqué.';
+            toast('Lien copié – collez-le dans le mail');
+        }
+        location.href = href;
+    };
+
+    $('reset').onclick = () => {
+        ['client','ref','adresse','cp','ville','contact','tel','tech','travaux','note'].forEach(id => $(id).value = '');
+        $('date').value = today();
+        $('mat').replaceChildren();
+        $('result').style.display = 'none';
+        current = null;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+</script>
+</body>
+</html>
