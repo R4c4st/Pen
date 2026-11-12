@@ -48,10 +48,6 @@
     .link-box input { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #374151; }
     .btn-ok { background: var(--ok); color: #fff; }
     .hint { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
-    .steps { margin: 14px 0 0; padding: 12px 12px 12px 32px; background: #f0fdf4; border-radius: 8px; color: #166534; font-size: 14px; line-height: 1.7; }
-    kbd { background: #fff; border: 1px solid #cbd5e1; border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: 12px; font-family: inherit; }
-    .preview-label { margin: 16px 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; }
-    .preview { border: 1px dashed var(--line); border-radius: 10px; padding: 16px; background: #fff; }
     .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
     .toast.show { opacity: 1; }
 </style>
@@ -111,20 +107,15 @@
 
     <div class="card" id="result" style="margin-top:16px">
         <h2>✓ Mission prête</h2>
-        <input type="hidden" id="link">
+        <div class="link-box">
+            <input id="link" readonly>
+            <button type="button" class="btn btn-ghost" id="copy">Copier</button>
+        </div>
         <div class="actions">
-            <button type="button" class="btn btn-ok" id="eml">✉️ Ouvrir le mail dans Outlook</button>
+            <button type="button" class="btn btn-ok" id="mail">✉️ Envoyer par mail</button>
             <a class="btn btn-ghost" id="open" target="_blank" rel="noopener" style="text-decoration:none">Aperçu du bon</a>
         </div>
-        <ol class="steps" id="steps" hidden>
-            <li>Ouvrez le fichier <b id="eml-name">Mission_SAV.eml</b> qui vient d'être téléchargé (barre de téléchargement du navigateur).</li>
-            <li>Le mail s'ouvre dans Outlook, déjà rempli : cliquez sur <b>Envoyer</b>.</li>
-        </ol>
-        <div class="preview-label">Aperçu du mail :</div>
-        <div class="preview" id="preview"></div>
-        <p class="hint" id="hint">Autres moyens :
-            <a href="#" id="mail">copier le mail (Teams, autre messagerie)</a> ·
-            <a href="#" id="copy">copier le lien seul (SMS, WhatsApp)</a></p>
+        <p class="hint" id="hint">Vous pouvez aussi coller le lien dans Teams, WhatsApp Web ou un SMS.</p>
     </div>
 </div>
 <div class="toast" id="toast"></div>
@@ -211,116 +202,36 @@
 
     async function copyLink() {
         try { await navigator.clipboard.writeText(current.url); }
-        catch { const t = document.createElement('textarea'); t.value = current.url; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); }
+        catch { $('link').select(); document.execCommand('copy'); }
     }
-    $('copy').onclick = async () => { if (!current) return; await copyLink(); toast('Lien copié (pour SMS / WhatsApp)'); };
+    $('copy').onclick = async () => { if (!current) return; await copyLink(); toast('Lien copié'); };
 
-    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const frDate = d => d ? d.split('-').reverse().join('/') : '';
-
-    // Mail en HTML (tableaux + styles en ligne : compatible Outlook)
-    function mailHtml(m, url) {
-        const row = (k, v) => v ? `<tr><td style="padding:3px 14px 3px 0;color:#6b7280;font-size:13px;white-space:nowrap;vertical-align:top;">${k}</td><td style="padding:3px 0;color:#1f2937;font-size:14px;">${v}</td></tr>` : '';
-        const adresse = [m.adresse, [m.cp, m.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ');
-        const contact = [m.contact, m.tel].filter(Boolean).join(' – ');
-        return `<div style="font-family:Segoe UI,Arial,sans-serif;font-size:14px;color:#1f2937;">
-<p style="margin:0 0 12px;">Bonjour,</p>
-<p style="margin:0 0 12px;">Voici une nouvelle mission SAV.</p>
-<table cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;border:1px solid #dbe4ee;border-left:4px solid #2980b9;background:#f7fafd;">
-<tr><td style="padding:12px 16px;">
-<div style="font-size:15px;font-weight:bold;color:#2980b9;margin-bottom:6px;">Mission SAV${m.ref ? ' – ' + esc(m.ref) : ''}</div>
-<table cellpadding="0" cellspacing="0" border="0">
-${row('Client', '<b>' + esc(m.client) + '</b>')}${row('Adresse', esc(adresse))}${row('Date prévue', esc(frDate(m.date)))}${row('Contact', esc(contact))}${row('Travaux', esc(m.travaux).replace(/\n/g, '<br>'))}
-</table>
-</td></tr></table>
-<table cellpadding="0" cellspacing="0" border="0" style="margin:16px 0 6px;"><tr>
-<td bgcolor="#2980b9" style="border-radius:6px;background:#2980b9;"><a href="${esc(url)}" style="display:inline-block;padding:11px 22px;color:#ffffff;font-weight:bold;font-size:15px;text-decoration:none;border-radius:6px;">📋 Ouvrir le bon d'intervention</a></td>
-</tr></table>
-<p style="margin:0 0 14px;color:#6b7280;font-size:12px;">À ouvrir depuis le téléphone : le bon s'affiche déjà rempli.</p>
-${m.from ? `<p style="margin:0;">${esc(m.from)}</p>` : ''}
-</div>`;
-    }
-    function mailText(m, url) {
-        return ['Bonjour,', '', 'Nouvelle mission SAV' + (m.ref ? ' – ' + m.ref : ''), 'Client : ' + (m.client || ''),
-            '', "Ouvrir le bon d'intervention : " + url, '', m.from || ''].join('\n');
-    }
-
-    async function copyRich(html, text) {
-        try {
-            await navigator.clipboard.write([new ClipboardItem({
-                'text/html': new Blob([html], { type: 'text/html' }),
-                'text/plain': new Blob([text], { type: 'text/plain' })
-            })]);
-            return true;
-        } catch {
-            // Repli : copie de la zone d'aperçu sélectionnée
-            const sel = getSelection(), range = document.createRange();
-            range.selectNodeContents($('preview'));
-            sel.removeAllRanges(); sel.addRange(range);
-            const ok = document.execCommand('copy');
-            sel.removeAllRanges();
-            return ok;
-        }
-    }
-
-    // Aperçu dès que la mission est créée
-    $('f').addEventListener('submit', () => setTimeout(() => {
-        if (current) $('preview').innerHTML = mailHtml(current.m, current.url);
-        $('steps').hidden = true;
-    }, 50));
-
-    const subjectOf = m => `Mission SAV – ${m.client || ''}${m.ref ? ' – ' + m.ref : ''}${m.date ? ' – ' + frDate(m.date) : ''}`;
-
-    // Copie du mail mis en forme (Teams, autre messagerie)
-    $('mail').onclick = async e => {
-        e.preventDefault();
-        if (!current) return;
-        const ok = await copyRich(mailHtml(current.m, current.url), mailText(current.m, current.url));
-        toast(ok ? 'Mail copié – collez-le avec Ctrl+V' : 'Copie impossible : sélectionnez l\'aperçu et copiez-le');
-    };
-
-    // Brouillon Outlook (.eml) : s'ouvre directement prêt à envoyer
-    function b64utf8(s) {
-        const bytes = new TextEncoder().encode(s);
-        let bin = ''; bytes.forEach(b => bin += String.fromCharCode(b));
-        return btoa(bin).replace(/.{76}/g, '$&\r\n');
-    }
-    function buildEml(m, url, to) {
-        const boundary = 'oci-' + Date.now().toString(36);
-        const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body>${mailHtml(m, url)}</body></html>`;
-        return [
-            'X-Unsent: 1',
-            to ? `To: ${to.replace(/[\r\n]/g, '')}` : 'To: ',
-            `Subject: =?UTF-8?B?${b64utf8(subjectOf(m)).replace(/\r\n/g, '')}?=`,
-            'MIME-Version: 1.0',
-            `Content-Type: multipart/alternative; boundary="${boundary}"`,
-            '',
-            `--${boundary}`,
-            'Content-Type: text/plain; charset=UTF-8',
-            'Content-Transfer-Encoding: base64',
-            '',
-            b64utf8(mailText(m, url).replace(/\n/g, '\r\n')),
-            `--${boundary}`,
-            'Content-Type: text/html; charset=UTF-8',
-            'Content-Transfer-Encoding: base64',
-            '',
-            b64utf8(html),
-            `--${boundary}--`,
-            ''
-        ].join('\r\n');
-    }
-    $('eml').onclick = () => {
+    $('mail').onclick = async () => {
         if (!current) return;
         const m = current.m;
-        const name = 'Mission_SAV_' + (m.client || 'client').replace(/[^\p{L}\p{N}]+/gu, '_').replace(/^_|_$/g, '') + '.eml';
-        const blob = new Blob([buildEml(m, current.url, $('to').value.trim())], { type: 'message/rfc822' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = name;
-        document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(a.href), 10000);
-        $('eml-name').textContent = name;
-        $('steps').hidden = false;
-        toast('Mail prêt – ouvrez le fichier téléchargé');
+        const fr = d => d ? d.split('-').reverse().join('/') : '';
+        const subject = `Mission SAV – ${m.client || ''}${m.ref ? ' – ' + m.ref : ''}`;
+        const lines = [
+            'Bonjour,', '',
+            'Nouvelle mission SAV :',
+            `Client : ${m.client || ''}`,
+            [m.adresse, m.cp, m.ville].filter(Boolean).length ? `Adresse : ${[m.adresse, [m.cp, m.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ')}` : null,
+            m.date ? `Date prévue : ${fr(m.date)}` : null,
+            (m.contact || m.tel) ? `Contact : ${[m.contact, m.tel].filter(Boolean).join(' – ')}` : null,
+            '', 'Bon d\'intervention pré-rempli (ouvrir sur le téléphone) :', current.url, '',
+            m.from || ''
+        ].filter(l => l !== null);
+        const to = $('to').value.trim();
+        let href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(lines.join('\r\n'))}`;
+        if (href.length > 1900) {
+            // Lien trop long pour certains logiciels de mail : on le copie et on l'indique dans le mail
+            await copyLink();
+            const short = lines.map(l => l === current.url ? '[collez ici le lien : Ctrl+V]' : l);
+            href = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(short.join('\r\n'))}`;
+            $('hint').textContent = 'Le lien est long : il a été copié, collez-le dans le mail (Ctrl+V) à l\'endroit indiqué.';
+            toast('Lien copié – collez-le dans le mail');
+        }
+        location.href = href;
     };
 
     $('reset').onclick = () => {
