@@ -3,8 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mission SAV – OCI CONNECT</title>
+<title>Ordre d'intervention – OCI CONNECT</title>
 <link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="manifest" href="mission.webmanifest">
+<meta name="theme-color" content="#2980b9">
 <style>
     :root {
         --blue: #2980b9; --blue-dark: #1f6391; --blue-soft: #eff6ff;
@@ -57,9 +59,10 @@
     <header>
         <img src="icons/icon-192.png" alt="">
         <div>
-            <h1>Nouvelle mission SAV</h1>
+            <h1>Nouvel ordre d'intervention</h1>
             <p>Remplissez ce qui est connu : le technicien reçoit un lien qui ouvre son bon d'intervention déjà pré-rempli.</p>
         </div>
+        <button type="button" class="btn btn-ghost" id="install" hidden style="margin-left:auto;white-space:nowrap">⬇ Installer sur ce PC</button>
     </header>
 
     <form id="f" autocomplete="off">
@@ -67,7 +70,7 @@
             <h2>Client</h2>
             <div class="grid">
                 <div class="c4"><label>Client <span class="req">*</span></label><input id="client" required placeholder="Nom de l'entreprise"></div>
-                <div class="c2"><label>N° SAV / affaire <span class="opt">(facultatif)</span></label><input id="ref"></div>
+                <div class="c2"><label>N° de ticket / commande <span class="opt">(facultatif)</span></label><input id="ref"></div>
                 <div class="c6"><label>Adresse</label><input id="adresse" placeholder="Numéro et rue"></div>
                 <div class="c2"><label>Code postal</label><input id="cp" inputmode="numeric" maxlength="5"></div>
                 <div class="c4"><label>Ville</label><input id="ville"></div>
@@ -100,13 +103,13 @@
         </div>
 
         <div class="actions">
-            <button type="submit" class="btn btn-primary">Créer la mission</button>
-            <button type="button" class="btn btn-ghost" id="reset">Nouvelle mission</button>
+            <button type="submit" class="btn btn-primary">Créer l'ordre</button>
+            <button type="button" class="btn btn-ghost" id="reset">Nouvel ordre</button>
         </div>
     </form>
 
     <div class="card" id="result" style="margin-top:16px">
-        <h2>✓ Mission prête</h2>
+        <h2>✓ Ordre prêt</h2>
         <div class="link-box">
             <input id="link" readonly>
             <button type="button" class="btn btn-ghost" id="copy">Copier</button>
@@ -210,10 +213,10 @@
         if (!current) return;
         const m = current.m;
         const fr = d => d ? d.split('-').reverse().join('/') : '';
-        const subject = `Mission SAV – ${m.client || ''}${m.ref ? ' – ' + m.ref : ''}`;
+        const subject = `Ordre d'intervention – ${m.client || ''}${m.ref ? ' – ' + m.ref : ''}`;
         const lines = [
             'Bonjour,', '',
-            'Nouvelle mission SAV :',
+            'Nouvel ordre d\'intervention :',
             `Client : ${m.client || ''}`,
             [m.adresse, m.cp, m.ville].filter(Boolean).length ? `Adresse : ${[m.adresse, [m.cp, m.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ')}` : null,
             m.date ? `Date prévue : ${fr(m.date)}` : null,
@@ -233,6 +236,18 @@
         }
         location.href = href;
     };
+
+    // Installation comme application sur le PC (Edge / Chrome)
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+    let installEvt = null;
+    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; $('install').hidden = false; });
+    $('install').onclick = async () => {
+        if (!installEvt) return;
+        installEvt.prompt();
+        await installEvt.userChoice;
+        installEvt = null; $('install').hidden = true;
+    };
+    window.addEventListener('appinstalled', () => { $('install').hidden = true; toast('Application installée'); });
 
     $('reset').onclick = () => {
         ['client','ref','adresse','cp','ville','contact','tel','tech','travaux','note'].forEach(id => $(id).value = '');

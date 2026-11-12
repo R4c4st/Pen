@@ -1,5 +1,5 @@
 /* OCI CONNECT – Bon d'intervention : service worker (hors ligne + installation) */
-const CACHE = 'oci-bi-v2';
+const CACHE = 'oci-bi-v3';
 const APP_FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 const CDN_FILES = [
   'https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js',
@@ -36,9 +36,9 @@ self.addEventListener('fetch', event => {
     event.respondWith(
       fetch(req).then(res => {
         const copy = res.clone();
-        caches.open(CACHE).then(c => c.put('./index.html', copy));
+        caches.open(CACHE).then(c => c.put(url.origin + url.pathname, copy));
         return res;
-      }).catch(() => caches.match('./index.html'))
+      }).catch(() => caches.match(url.origin + url.pathname).then(r => r || caches.match('./index.html')))
     );
     return;
   }

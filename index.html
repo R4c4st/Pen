@@ -60,7 +60,7 @@
         #install-banner button { border: none; border-radius: 8px; padding: 10px 14px; font-weight: bold; font-size: 14px; }
         #install-yes { background: #2980b9; color: #fff; }
         #install-no { background: transparent; color: #d1d5db; }
-        /* Carte mission SAV reçue par lien */
+        /* Carte ordre d'intervention reçu par lien */
         .mission-card { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 14px; margin-bottom: 18px; font-size: 14px; color: #1e3a5f; }
         .mission-card[hidden] { display: none; }
         .mc-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 4px; }
@@ -145,18 +145,18 @@
     <div class="step active" id="step-1">
         <h2 class="step-title">Informations générales</h2>
         <div id="mission-card" class="mission-card" hidden>
-            <div class="mc-head"><strong>📋 Mission SAV</strong><span class="mc-ref" id="mc-ref"></span></div>
+            <div class="mc-head"><strong>📋 Ordre d'intervention</strong><span class="mc-ref" id="mc-ref"></span></div>
             <div class="mc-line" id="mc-from"></div>
             <div class="mc-line" id="mc-contact"></div>
             <div class="mc-note" id="mc-note" hidden></div>
             <div class="mc-actions">
                 <a class="mc-btn" id="mc-tel" hidden>📞 Appeler</a>
                 <a class="mc-btn" id="mc-map" target="_blank" rel="noopener" hidden>🧭 Itinéraire</a>
-                <button type="button" class="mc-btn secondary" id="mc-close">Terminer la mission</button>
+                <button type="button" class="mc-btn secondary" id="mc-close">Clôturer l'ordre</button>
             </div>
         </div>
         <div class="form-group"><label>Date d'intervention</label><input type="date" id="m_date"></div>
-        <div class="form-group"><label>N° SAV / affaire</label><input type="text" id="m_ref" placeholder="Facultatif"></div>
+        <div class="form-group"><label>N° de ticket / commande</label><input type="text" id="m_ref" placeholder="Facultatif"></div>
         <div class="form-group"><label>Client</label><input type="text" id="m_client" placeholder="Nom de l'entreprise"></div>
         <div class="form-group"><label>Adresse</label><input type="text" id="m_adresse" placeholder="Numéro et rue"></div>
         <div class="form-group"><label>Code Postal</label><input type="number" id="m_cp"></div>
@@ -241,7 +241,7 @@
 
     <div class="pdf-section pdf-grid-4">
         <div class="pdf-field"><span class="pdf-label">Date d'intervention</span><div class="pdf-value" id="p_date"></div></div>
-        <div class="pdf-field"><span class="pdf-label">N° SAV / affaire</span><div class="pdf-value" id="p_ref"></div></div>
+        <div class="pdf-field"><span class="pdf-label">N° de ticket / commande</span><div class="pdf-value" id="p_ref"></div></div>
         <div class="pdf-field span-2"><span class="pdf-label">Client</span><div class="pdf-value" id="p_client"></div></div>
         <div class="pdf-field span-2"><span class="pdf-label">Adresse</span><div class="pdf-value" id="p_adresse"></div></div>
         <div class="pdf-field"><span class="pdf-label">Code Postal</span><div class="pdf-value" id="p_cp"></div></div>
@@ -416,7 +416,7 @@
         // Carte d'infos
         const card = document.getElementById('mission-card');
         document.getElementById('mc-ref').textContent = m.ref ? 'N° ' + m.ref : '';
-        document.getElementById('mc-from').textContent = m.from ? 'Envoyée par ' + m.from : '';
+        document.getElementById('mc-from').textContent = m.from ? 'Envoyé par ' + m.from : '';
         const contact = [m.contact, m.tel].filter(Boolean).join(' – ');
         document.getElementById('mc-contact').textContent = contact ? 'Contact sur site : ' + contact : '';
         const note = document.getElementById('mc-note');
@@ -444,8 +444,8 @@
                     try { localStorage.setItem(MISSION_KEY, JSON.stringify({ t: Date.now(), m: mission })); } catch {}
                 }
             } catch (e) {
-                console.error('Lien de mission illisible :', e);
-                alert("Le lien de mission est incomplet ou abîmé. Demandez-en un nouveau.");
+                console.error('Lien d\'ordre d\'intervention illisible :', e);
+                alert("Le lien de l'ordre d'intervention est incomplet ou abîmé. Demandez-en un nouveau.");
             }
             history.replaceState(null, '', location.pathname + location.search);
         } else {
