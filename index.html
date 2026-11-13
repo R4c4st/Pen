@@ -38,6 +38,11 @@
         .form-group { margin-bottom: 20px; width: 100%; }
         label { display: block; font-weight: 600; margin-bottom: 8px; font-size: 15px; color: #4b5563;}
         input, textarea { width: 100%; padding: 16px; border: 1px solid #d1d5db; border-radius: 12px; box-sizing: border-box; font-size: 16px; background-color: #f9fafb;}
+        [hidden] { display: none !important; }
+        .tech-select { width: 100%; padding: 16px 44px 16px 16px; border: 1px solid #d1d5db; border-radius: 12px; box-sizing: border-box; font-size: 16px; color: #1f2937;
+            background: #f9fafb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 16px center;
+            -webkit-appearance: none; appearance: none; }
+        .tech-select + input { margin-top: 8px; }
         input:focus, textarea:focus { border-color: #2980b9; outline: none; background-color: #fff; }
 .grid-mat { display: flex; gap: 8px; margin-bottom: 12px; flex-direction: column;}
         .grid-mat input { padding: 14px 10px;}
@@ -142,7 +147,26 @@
         .pdf-sig-box img { max-height: 26mm; max-width: 100%; display: none; }
         .photo-upload-group small { display:block; color:#6b7280; margin-top:7px; line-height:1.4; }
         .photo-preview { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin-top:10px; }
-        .photo-preview img { width:100%; height:90px; object-fit:cover; border-radius:8px; border:1px solid #d1d5db; }
+        .photo-thumb { position: relative; }
+        .photo-thumb img { display:block; width:100%; height:90px; object-fit:cover; border-radius:8px; border:1px solid #d1d5db; }
+        .photo-thumb button { position:absolute; top:4px; right:4px; width:28px; height:28px; border-radius:50%; border:none; background:rgba(17,24,39,.75); color:#fff; font-size:15px; line-height:28px; padding:0; }
+        .photo-thumb span { position:absolute; left:4px; bottom:4px; background:rgba(17,24,39,.7); color:#fff; font-size:11px; padding:1px 6px; border-radius:6px; }
+        .photo-actions { display:flex; gap:8px; }
+        .photo-actions label { flex:1; text-align:center; padding:14px 8px; border-radius:12px; font-weight:bold; font-size:15px; margin:0; cursor:pointer; }
+        .photo-cam { background:#2980b9; color:#fff !important; }
+        .photo-gal { background:#fff; color:#2980b9 !important; border:1px solid #93c5fd; }
+        .photo-count { font-size:13px; color:#374151; font-weight:600; margin-top:10px; }
+        .btn-route { width:100%; background:#fff; color:#2980b9; border:1px solid #93c5fd; border-radius:12px; padding:13px; font-size:15px; font-weight:bold; margin:-6px 0 18px; }
+        /* Choix de l'appli GPS */
+        .sheet-bg { position:fixed; inset:0; z-index:2500; background:rgba(0,0,0,.4); display:flex; align-items:flex-end; }
+        .sheet-bg[hidden] { display:none; }
+        .sheet { background:#fff; width:100%; border-radius:18px 18px 0 0; padding:18px 15px calc(18px + env(safe-area-inset-bottom)); }
+        .sheet h3 { margin:0 0 4px; font-size:17px; color:#1f2937; }
+        .sheet .sheet-addr { font-size:13px; color:#6b7280; margin-bottom:14px; }
+        .sheet button { display:flex; align-items:center; gap:12px; width:100%; text-align:left; background:#f9fafb; border:1px solid #e5e7eb; border-radius:12px; padding:14px; font-size:16px; font-weight:600; color:#1f2937; margin-bottom:8px; }
+        .sheet button.last { border-color:#2980b9; background:#eff6ff; }
+        .sheet button small { margin-left:auto; font-weight:400; color:#2980b9; font-size:12px; }
+        .sheet .sheet-cancel { justify-content:center; background:#fff; color:#6b7280; margin:6px 0 0; }
         .pdf-photo-page { padding-top: 2mm; }
         .pdf-photo-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:18px; }
         .pdf-photo-item { border:1px solid #d1d5db; padding:6px; break-inside:avoid; page-break-inside:avoid; }
@@ -183,7 +207,7 @@
             <div class="mc-note" id="mc-note" hidden></div>
             <div class="mc-actions">
                 <a class="mc-btn" id="mc-tel" hidden>📞 Appeler</a>
-                <a class="mc-btn" id="mc-map" target="_blank" rel="noopener" hidden>🧭 Itinéraire</a>
+                <button type="button" class="mc-btn" id="mc-map" hidden onclick="openRoute()">🧭 Itinéraire</button>
                 <button type="button" class="mc-btn secondary" id="mc-close">Clôturer l'ordre</button>
             </div>
         </div>
@@ -193,6 +217,7 @@
         <div class="form-group"><label>Adresse</label><input type="text" id="m_adresse" placeholder="Numéro et rue"></div>
         <div class="form-group"><label>Code Postal</label><input type="number" id="m_cp"></div>
         <div class="form-group"><label>Ville</label><input type="text" id="m_ville"></div>
+        <button type="button" class="btn-route" id="btn-route" hidden onclick="openRoute()">🧭 Itinéraire vers cette adresse</button>
     </div>
 
     <!-- Étape 2 -->
@@ -238,11 +263,30 @@
             <button class="btn-clear" onclick="padTech.clear()">Effacer</button>
         </div>
         <div class="form-group photo-upload-group">
-            <label for="m_photos">Photos de l'intervention (facultatif)</label>
-            <input type="file" id="m_photos" accept="image/*" capture="environment" multiple>
-            <small>Ajoutez une ou plusieurs photos. Elles seront imprimées sur une deuxième page du PDF.</small>
+            <label>Photos de l'intervention (facultatif)</label>
+            <div class="photo-actions">
+                <label class="photo-cam" for="m_photo_cam">📷 Prendre une photo</label>
+                <label class="photo-gal" for="m_photos">🖼 Galerie</label>
+            </div>
+            <input type="file" id="m_photo_cam" accept="image/*" capture="environment" hidden>
+            <input type="file" id="m_photos" accept="image/*" multiple hidden>
+            <small>Prenez autant de photos que nécessaire, elles s'ajoutent à la suite. Elles sont imprimées sur une deuxième page du PDF.</small>
+            <div class="photo-count" id="photo-count" hidden></div>
             <div id="photo-preview" class="photo-preview"></div>
         </div>
+    </div>
+</div>
+
+<!-- Choix de l'appli GPS -->
+<div class="sheet-bg" id="route-sheet" hidden onclick="if (event.target === this) closeRoute()">
+    <div class="sheet">
+        <h3>Ouvrir l'itinéraire avec…</h3>
+        <div class="sheet-addr" id="route-addr"></div>
+        <button type="button" data-app="google">🗺️ Google Maps</button>
+        <button type="button" data-app="waze">🚙 Waze</button>
+        <button type="button" data-app="apple" id="route-apple" hidden>🧭 Plans (Apple)</button>
+        <button type="button" data-app="geo">📱 Autre appli GPS du téléphone</button>
+        <button type="button" class="sheet-cancel" onclick="closeRoute()">Annuler</button>
     </div>
 </div>
 
@@ -344,6 +388,7 @@
     </section>
 </div>
 
+<script src="techniciens.js"></script>
 <script>
     // NAVIGATION
     let currentStep = 1;
@@ -393,20 +438,94 @@
         sigData[i === 0 ? 'client' : 'tech'] = null; saveDraftSoon();
     }));
 
-    // PHOTOS DE L'INTERVENTION
-    const photoInput = document.getElementById('m_photos');
-    let selectedPhotos = [];
-    photoInput.addEventListener('change', async function () {
-        selectedPhotos = Array.from(this.files || []).filter(file => file.type.startsWith('image/'));
+    // PHOTOS DE L'INTERVENTION — ajoutées à la suite, compressées, gardées avec le brouillon
+    let selectedPhotos = []; // [{ id, blob, url }]
+    const PHOTO_MAX = 1600; // px (côté le plus long) : PDF léger et partage rapide
+
+    async function compressPhoto(file) {
+        try {
+            const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+            const scale = Math.min(1, PHOTO_MAX / Math.max(bmp.width, bmp.height));
+            const c = document.createElement('canvas');
+            c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+            c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+            bmp.close && bmp.close();
+            const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.8));
+            return blob || file;
+        } catch { return file; }
+    }
+
+    function photoDB() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open('oci-photos', 1);
+            req.onupgradeneeded = () => req.result.createObjectStore('p', { keyPath: 'id' });
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    }
+    async function photoStore(fn) {
+        const db = await photoDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('p', 'readwrite');
+            const r = fn(tx.objectStore('p'));
+            tx.oncomplete = () => resolve(r && r.result);
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    function renderPhotos() {
         const preview = document.getElementById('photo-preview');
         preview.replaceChildren();
-        selectedPhotos.forEach(file => {
-            const img = document.createElement('img');
-            img.alt = file.name;
-            img.src = URL.createObjectURL(file);
-            preview.appendChild(img);
+        selectedPhotos.forEach((p, i) => {
+            const d = document.createElement('div'); d.className = 'photo-thumb';
+            const img = document.createElement('img'); img.src = p.url; img.alt = 'Photo ' + (i + 1);
+            const n = document.createElement('span'); n.textContent = i + 1;
+            const del = document.createElement('button'); del.type = 'button'; del.textContent = '✕'; del.title = 'Retirer';
+            del.onclick = () => removePhoto(p.id);
+            d.append(img, n, del); preview.appendChild(d);
         });
-    });
+        const count = document.getElementById('photo-count');
+        count.hidden = !selectedPhotos.length;
+        count.textContent = selectedPhotos.length + (selectedPhotos.length > 1 ? ' photos ajoutées' : ' photo ajoutée');
+    }
+    async function addPhotos(files) {
+        for (const f of files) {
+            if (!f.type.startsWith('image/')) continue;
+            const blob = await compressPhoto(f);
+            const p = { id: 'P' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), blob, t: Date.now() };
+            p.url = URL.createObjectURL(blob);
+            selectedPhotos.push(p);
+            photoStore(st => st.put({ id: p.id, bon: bonId, blob, t: p.t })).catch(() => {});
+        }
+        renderPhotos(); invalidatePdf();
+    }
+    function removePhoto(id) {
+        const p = selectedPhotos.find(x => x.id === id);
+        if (p) URL.revokeObjectURL(p.url);
+        selectedPhotos = selectedPhotos.filter(x => x.id !== id);
+        photoStore(st => st.delete(id)).catch(() => {});
+        renderPhotos(); invalidatePdf();
+    }
+    function clearPhotos() {
+        selectedPhotos.forEach(p => URL.revokeObjectURL(p.url));
+        selectedPhotos = [];
+        photoStore(st => st.clear()).catch(() => {});
+        renderPhotos();
+    }
+    async function restorePhotos() {
+        try {
+            const all = await photoStore(st => st.getAll());
+            selectedPhotos = (all || []).filter(r => r.bon === bonId).sort((a, b) => a.t - b.t)
+                .map(r => ({ id: r.id, blob: r.blob, t: r.t, url: URL.createObjectURL(r.blob) }));
+            renderPhotos();
+        } catch {}
+    }
+    ['m_photo_cam', 'm_photos'].forEach(id => document.getElementById(id).addEventListener('change', async function (e) {
+        e.stopPropagation();
+        const files = Array.from(this.files || []);
+        this.value = ''; // permet de reprendre/choisir une autre photo tout de suite
+        await addPhotos(files);
+    }));
 
     // MATERIEL
     function addMaterielRow() {
@@ -489,6 +608,7 @@
     const FIELD_IDS = ['m_date', 'm_ref', 'm_client', 'm_adresse', 'm_cp', 'm_ville', 'm_prevus', 'm_realises',
                        'm_tech', 'm_nomclient', 'm_arrivee', 'm_depart', 'm_kms'];
     let bonId = null, saveTimer = null;
+    let syncTech = () => {}; // menu déroulant des techniciens (techniciens.js)
     const newId = () => 'BI' + Date.now().toString(36);
 
     function snapshot() {
@@ -512,6 +632,8 @@
     function loadData(s) {
         FIELD_IDS.forEach(id => { document.getElementById(id).value = (s.fields && s.fields[id]) || ''; });
         setMateriel(s.mat);
+        syncTech();
+        if (typeof updateRouteBtn === 'function') updateRouteBtn();
         sigData.client = (s.sig && s.sig.client) || null;
         sigData.tech = (s.sig && s.sig.tech) || null;
         padClient.clear(); padTech.clear();
@@ -531,9 +653,7 @@
     function resetForm() {
         bonId = newId();
         loadData({ fields: { m_date: todayISO(), m_tech: rememberedTech() }, mat: [] });
-        selectedPhotos = [];
-        document.getElementById('m_photos').value = '';
-        document.getElementById('photo-preview').replaceChildren();
+        clearPhotos();
         document.getElementById('mission-card').hidden = true;
         try { localStorage.removeItem(MISSION_KEY); } catch {}
         lastPdf = null;
@@ -561,6 +681,9 @@
         }
         if (!document.getElementById('m_tech').value) document.getElementById('m_tech').value = rememberedTech();
     })();
+    syncTech = techPicker(document.getElementById('m_tech'));
+    restorePhotos();
+    updateRouteBtn();
     document.getElementById('app-container').addEventListener('input', saveDraftSoon);
     document.getElementById('app-container').addEventListener('change', saveDraftSoon);
     document.addEventListener('visibilitychange', () => { if (document.hidden) saveDraft(); });
@@ -592,6 +715,8 @@
         set('m_adresse', m.adresse); set('m_cp', m.cp); set('m_ville', m.ville);
         set('m_prevus', m.travaux); set('m_tech', m.tech); set('m_nomclient', m.contact);
         if (Array.isArray(m.materiel) && m.materiel.length) setMateriel(m.materiel);
+        syncTech();
+        updateRouteBtn();
         saveDraft();
     }
     function showMissionCard(m) {
@@ -605,11 +730,45 @@
         const tel = document.getElementById('mc-tel');
         const telClean = String(m.tel || '').replace(/[^\d+]/g, '');
         tel.hidden = !telClean; if (telClean) tel.href = 'tel:' + telClean;
-        const addr = [m.adresse, m.cp, m.ville].filter(Boolean).join(' ');
-        const map = document.getElementById('mc-map');
-        map.hidden = !addr; if (addr) map.href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(addr);
+        document.getElementById('mc-map').hidden = !currentAddress();
         card.hidden = false;
     }
+
+    // ITINÉRAIRE : choix de l'appli GPS (la dernière utilisée est mise en avant)
+    const ROUTE_KEY = 'oci-gps';
+    function currentAddress() {
+        return [document.getElementById('m_adresse').value, document.getElementById('m_cp').value, document.getElementById('m_ville').value]
+            .map(s => String(s || '').trim()).filter(Boolean).join(' ');
+    }
+    function updateRouteBtn() { document.getElementById('btn-route').hidden = !currentAddress(); }
+    ['m_adresse', 'm_cp', 'm_ville'].forEach(id => document.getElementById(id).addEventListener('input', updateRouteBtn));
+    const isApple = /iPhone|iPad|Macintosh/.test(navigator.userAgent) && 'ontouchend' in document;
+    document.getElementById('route-apple').hidden = !isApple;
+    function openRoute() {
+        const addr = currentAddress();
+        if (!addr) return;
+        document.getElementById('route-addr').textContent = addr;
+        let last = ''; try { last = localStorage.getItem(ROUTE_KEY) || ''; } catch {}
+        document.querySelectorAll('#route-sheet [data-app]').forEach(b => {
+            b.classList.toggle('last', b.dataset.app === last);
+            b.querySelector('small') && b.querySelector('small').remove();
+            if (b.dataset.app === last) { const s = document.createElement('small'); s.textContent = 'dernière utilisée'; b.appendChild(s); }
+        });
+        document.getElementById('route-sheet').hidden = false;
+    }
+    function closeRoute() { document.getElementById('route-sheet').hidden = true; }
+    document.querySelectorAll('#route-sheet [data-app]').forEach(b => b.addEventListener('click', () => {
+        const q = encodeURIComponent(currentAddress());
+        const urls = {
+            google: 'https://www.google.com/maps/dir/?api=1&destination=' + q,
+            waze: 'https://waze.com/ul?q=' + q + '&navigate=yes',
+            apple: 'https://maps.apple.com/?daddr=' + q,
+            geo: 'geo:0,0?q=' + q
+        };
+        try { localStorage.setItem(ROUTE_KEY, b.dataset.app); } catch {}
+        closeRoute();
+        window.location.href = urls[b.dataset.app];
+    }));
 
     document.getElementById('mc-close').addEventListener('click', () => {
         document.getElementById('mission-card').hidden = true;
@@ -849,7 +1008,7 @@
                         const reader = new FileReader();
                         reader.onload = () => resolve(reader.result);
                         reader.onerror = reject;
-                        reader.readAsDataURL(selectedPhotos[i]);
+                        reader.readAsDataURL(selectedPhotos[i].blob);
                     });
                     const item = document.createElement('div');
                     item.className = 'pdf-photo-item';
@@ -858,7 +1017,7 @@
                     img.alt = 'Photo ' + (i + 1);
                     const caption = document.createElement('div');
                     caption.className = 'pdf-photo-caption';
-                    caption.textContent = 'Photo ' + (i + 1) + (selectedPhotos[i].name ? ' – ' + selectedPhotos[i].name : '');
+                    caption.textContent = 'Photo ' + (i + 1);
                     item.append(img, caption);
                     photoGrid.appendChild(item);
                 }
