@@ -1,5 +1,5 @@
 /* OCI CONNECT – Bon d'intervention : service worker (hors ligne + installation) */
-const CACHE = 'oci-bi-v4';
+const CACHE = 'oci-bi-v5';
 const APP_FILES = ['./', './index.html', './manifest.webmanifest', './techniciens.js', './icons/icon-192.png', './icons/icon-512.png'];
 const CDN_FILES = [
   'https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js',

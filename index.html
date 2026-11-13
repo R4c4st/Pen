@@ -170,7 +170,8 @@
         .pdf-photo-page { padding-top: 2mm; }
         .pdf-photo-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:18px; }
         .pdf-photo-item { border:1px solid #d1d5db; padding:6px; break-inside:avoid; page-break-inside:avoid; }
-        .pdf-photo-item img { display:block; width:100%; height:68mm; object-fit:contain; }
+        .pdf-photo-box { height:68mm; display:flex; align-items:center; justify-content:center; overflow:hidden; background:#f9fafb; }
+        .pdf-photo-box img { display:block; width:auto; height:auto; max-width:100%; max-height:68mm; }
         .pdf-photo-caption { font-size:11px; color:#555; margin-top:5px; }
 
         /* Eviter les coupures disgracieuses dans le PDF */
@@ -1015,10 +1016,15 @@
                     const img = document.createElement('img');
                     img.src = dataUrl;
                     img.alt = 'Photo ' + (i + 1);
+                    // html2canvas ignore object-fit : on garde les proportions via une boîte + max-width/max-height
+                    try { await img.decode(); } catch (e) {}
+                    const box = document.createElement('div');
+                    box.className = 'pdf-photo-box';
+                    box.appendChild(img);
                     const caption = document.createElement('div');
                     caption.className = 'pdf-photo-caption';
                     caption.textContent = 'Photo ' + (i + 1);
-                    item.append(img, caption);
+                    item.append(box, caption);
                     photoGrid.appendChild(item);
                 }
             } else {
