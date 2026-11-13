@@ -63,6 +63,12 @@
     .book-row .del { color: #e74c3c; }
     .book-empty { padding: 14px; color: var(--muted); font-size: 14px; }
     .known { color: var(--ok); font-weight: 400; font-size: 12px; margin-left: 6px; }
+    [hidden] { display: none !important; }
+    .tech-select { width: 100%; padding: 10px 36px 10px 12px; border: 1px solid var(--line); border-radius: 8px; font: inherit; color: var(--ink); cursor: pointer;
+        background: #fafbfc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+        -webkit-appearance: none; appearance: none; }
+    .tech-select:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(41,128,185,.15); }
+    .tech-select + input { margin-top: 8px; }
     .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 10px 16px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; }
     .toast.show { opacity: 1; }
 </style>
@@ -148,6 +154,7 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="techniciens.js"></script>
 <script>
     const $ = id => document.getElementById(id);
     const PREFS = 'oci-mission-prefs';
@@ -164,6 +171,14 @@
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     }
     $('date').value = today();
+    const syncTech = techPicker($('tech'));
+    // Technicien choisi → son mail est repris dans « Mail du technicien »
+    $('tech').addEventListener('change', () => {
+        const mail = techMail($('tech').value.trim());
+        if (mail) $('to').value = mail;
+        // technicien sans mail renseigné : on n'envoie pas au mail d'un autre technicien
+        else if (TECH_LIST.some(t => t.mail && t.mail === $('to').value.trim())) $('to').value = '';
+    });
 
     function addMat(v = {}) {
         const row = document.createElement('div');
@@ -363,6 +378,7 @@
         $('date').value = today();
         $('mat').replaceChildren();
         $('known').hidden = true;
+        syncTech();
         $('result').style.display = 'none';
         current = null;
         window.scrollTo({ top: 0, behavior: 'smooth' });
